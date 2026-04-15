@@ -1,0 +1,94 @@
+\documentclass[10pt, oneside]{article} 
+\usepackage{amsmath, amsthm, amssymb, calrsfs, wasysym, verbatim, bbm, color, geometry, hyperref, tocloft, xcolor}
+\usepackage{graphicx}
+\usepackage{wasysym}
+\usepackage{float}
+\usepackage{mathrsfs}
+
+\geometry{tmargin=1.25in, bmargin=1.25in, lmargin=1.25in, rmargin = 1.25in}
+\newcommand{\todo}{\textcolor{pink}{TODO}}
+
+\newcommand{\dd}{\mathop{}\!\mathrm{d}}
+\newcommand{\EE}{\mathbb{E}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\HH}{\mathbb{H}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cN}{\mathcal{N}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cX}{\mathcal{X}}
+\newcommand{\Cdot}{\boldsymbol{\cdot}}
+\newcommand{\simiid}{\overset{\text{i.i.d.}}{\sim}}
+\newcommand{\tod}{\overset{\text{d}}{\to}}
+\newcommand{\normalg}{\mathcal{N}(0,1)}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\Id}{\operatorname{Id}}
+\newcommand{\Cat}{\operatorname{Cat}}
+\newcommand{\Poi}{\operatorname{Poi}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\mc}{\mathcal}
+\newcommand{\e}{\mathrm{e}}
+\newcommand{\ii}{\mathrm{i}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\softmax}{\operatorname{Softmax}}
+
+\newtheorem{thm}{Theorem}[section] 
+\newtheorem{defn}[thm]{Definition} 
+\newtheorem{conv}[thm]{Convention} 
+\newtheorem{rem}[thm]{Remark}      
+\newtheorem{lem}[thm]{Lemma}       
+\newtheorem{cor}[thm]{Corollary}   
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{exam}[thm]{Example}
+\newtheorem{appr}[thm]{Approach}
+\newtheorem{obs}[thm]{Observation}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue
+}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
+\title{A Guided Tour of Statistics}
+\author{Zixun Huang}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\vspace{.25in}
+
+\newpage
+% \part{Chapter 1: Classic Theory}
+\input{Lecture0}
+\input{Lecture1}
+% \input{Lecture2}
+% \input{Lecture4}
+% \input{Lecture5}
+% \input{Lecture6}
+% \newpage
+% \part{Chapter 2: High-Dimensional Statistics}
+% \input{Lecture7}
+% \input{Lecture8}
+% \input{Lecture9}
+\input{Lecture10}
+% \newpage
+% \part{Chapter 3: Computational Statistics}
+% \input{Lecture15}
+% \input{Lecture16}
+% \input{Lecture22}
+% \newpage
+% \part{Chapter 4: Other Topics of Statistics}
+% \input{Lecture12}
+% \input{Lecture13}
+% \input{Lecture21}
+
+\newpage
+\bibliographystyle{plain}
+\bibliography{reference}
+\end{document}
