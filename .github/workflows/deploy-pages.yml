@@ -27,11 +27,14 @@ jobs:
           root_file: main.tex
           texlive_version: 2026
           args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
-          post_compile: ./scripts/build_html.sh
+          post_compile: ./scripts/convert_tex4ht.sh
 
       - name: Assemble website
         shell: bash
         run: |
+          rm -rf _site
+          mkdir -p _site
+          python3 scripts/postprocess_html.py .web-build/raw _site
           test -f _site/index.html
           cp main.pdf _site/notes.pdf
           touch _site/.nojekyll
