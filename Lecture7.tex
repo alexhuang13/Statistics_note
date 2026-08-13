@@ -1,2 +1,755 @@
 \newpage
-\section{Concentration Inequality, Hoeffding Inequality, Bernstein Inequality, Lipschitz Functions, Symmetrization}
+\section{Ramdom Matrix Theory}
+In addition to non-asymptotic results, we will need asymptotic analysis, which is more delicate. The section is organized as follows: 
+\begin{enumerate}
+    \item Density of eigenvalues in classical ensembles of random matrices
+    \item Semi-Circle Law and Marchenko–Pastur Law
+    \item BBP Transition
+    \item CLT for Eigenvalues
+    \item Spectrum Separation
+    \item Replica Method
+\end{enumerate}
+
+This section mainly follows STATC206B (UC Berkeley, taught by Vadim Gorin) and STAT260 (UC Berkeley, taught by Song Mei, 2021). I also refered to the book~\cite{bai2010spectral}.
+
+\subsection{Density of Eigenvalues in Classical Ensembles of Random Matrices}
+
+We begin our tour from an important type of matrix G$\beta$E ($\beta=1,2,4$). Let $X$ be $N\times N$ matrix with i.i.d. entries: 
+\[
+\begin{cases}
+    a) \normalg \\
+    b) \normalg + i\normalg \\
+    c) \normalg + i\normalg + j\normalg + k\normalg
+\end{cases}
+\]
+Set $M = \frac{1}{2}(X+X^*)$, and we have the main theorem.
+\begin{thm}[Density of Eigenvalues]
+    Let the eigenvalues of $M$ be $\lambda_1\ge \lambda_2\ge ...\ge \lambda_N$, and they have density
+    \[
+    \frac{1}{Z} \prod_{i<j}|\lambda_j-\lambda_i|^\beta \cdot \prod_{i=1}^N\exp(-\frac{\lambda_i^2}{2}) \dd \lambda_{1}...\dd \lambda_{N}.
+    \]
+    where $\beta = 1,2,4$ for a), b), c) and 
+    \[
+    Z = \frac{(2\pi)^{N/2}}{N!} \prod_{j=0}^N \frac{\Gamma(1+(j+1)\beta/2)}{\Gamma(1+\beta/2)}
+    \]
+    is the partition function (normalization factor).
+\end{thm}
+\begin{proof}
+    We prove $\beta = 1$ here and leave $\beta = 2$ to the homework.
+
+    \paragraph{Step 1}  Claim density of $M = \frac{1}{2}(X+X^*) \sim \exp(-\frac{1}{2}\tr(M^2))$.
+
+    Indeed, 
+    \[
+    \tr(M^2) = \sum_{i,j} m_{ij}^2 = \sum_{i=1}^N \underbrace{x_{ii}^2}_{\mathcal{N}(0,1)} + \frac{1}{2}\sum_{i<j} \underbrace{(x_{ij}+x_{ji})^2}_{\mathcal{N}(0,2)}
+    \]
+    implies that the density of $M\propto \exp(-\frac{1}{2}\tr(M^2))$
+
+    \paragraph{Step 2}  We can calculate that $\exp(-\frac{1}{2}\tr(M^2)) = \prod_{i=1}^N \exp(-\frac{\lambda_i^2}{2})$.
+
+    We derive it immediately by diagonalizing the the matrix $M$.
+
+    \paragraph{Step 3}  Each symmetric matrix is determined by its eigenvalues and eigenvectors, i.e. there exists an almost bijection $\pi$
+    \[
+    \pi: \underbrace{\mathcal{W}_N}_{\lambda_1<\lambda_2<...<\lambda_N} \times \underbrace{O(N)}_{\text{Orthogonal Bases}} \to \underbrace{\mathcal{H}_N}_{\text{Symmetric Matrix}}
+    \]
+    We say "almost" because indeed the map is not injective: we can multiply the eigenvalue by $\pm 1$. In other words, if the eigenvalues are unique, $\pi^{-1}(M)$ has exactly $2^N$ elements.
+
+    Now we give the key proposition of the proof.
+    \begin{prop}[Jacobian]
+        Consider the map $\pi: (\Lambda, O) \mapsto B$, where $\pi((\Lambda, O)) = O\Lambda O^*$. Then the Jocobian of the map is $\prod_{i<j} |\lambda_j-\lambda_i|$.
+    \end{prop}
+    \begin{rem}
+        It is an important technique to transform an intractable density calculation into a tractable one and a Jocobian.
+    \end{rem}
+    \begin{proof}
+        It is sufficient to calculate by taking $O = \Id$, as when we transform $O$ to $A\cdot O$ (where $A$ is orthogonal), the \textbf{uniform measure} on $O(N)$ and the Lebesgue measure on $\mathcal{H}(N)$ remain unchanged.
+
+        Then we take $O = \exp(B) = \Id + B + ...$ and we can deduce that $B + B^* = 0$ as $OO^* = \Id$. Then the map $\pi$ can be written as
+        \begin{align*}
+        \left((\lambda_1,...,\lambda_N), \exp(B)\right)
+        &\mapsto \exp(B)
+        \begin{pmatrix}
+        \lambda_1 & 0 & 0 & \cdots & 0 \\
+        0 & \lambda_2 & 0 & \cdots & 0 \\
+        0 & 0 & \lambda_3 & \cdots & 0 \\
+        \vdots & \vdots & \vdots & \ddots & \vdots \\
+        0 & 0 & 0 & \cdots & \lambda_n
+        \end{pmatrix}
+        \exp(-B)\\
+        &\mapsto (\Id+B)
+        \begin{pmatrix}
+        \lambda_1 & 0 & 0 & \cdots & 0 \\
+        0 & \lambda_2 & 0 & \cdots & 0 \\
+        0 & 0 & \lambda_3 & \cdots & 0 \\
+        \vdots & \vdots & \vdots & \ddots & \vdots \\
+        0 & 0 & 0 & \cdots & \lambda_n
+        \end{pmatrix}
+        (Id-B) + o(B)\\
+        &\mapsto 
+        \begin{pmatrix}
+        \lambda_1 & 0 & 0 & \cdots & 0 \\
+        0 & \lambda_2 & 0 & \cdots & 0 \\
+        0 & 0 & \lambda_3 & \cdots & 0 \\
+        \vdots & \vdots & \vdots & \ddots & \vdots \\
+        0 & 0 & 0 & \cdots & \lambda_n
+        \end{pmatrix}\\
+        &+
+        \begin{pmatrix}
+        0 & b_{12}(\lambda_2 - \lambda_1) & b_{13}(\lambda_3 - \lambda_1) & \cdots & b_{1n}(\lambda_n - \lambda_1) \\
+        b_{21}(\lambda_1 - \lambda_2) & 0 & b_{23}(\lambda_3 - \lambda_2) & \cdots & b_{2n}(\lambda_n - \lambda_2) \\
+        b_{31}(\lambda_1 - \lambda_3) & b_{32}(\lambda_2 - \lambda_3) & 0 & \cdots & b_{3n}(\lambda_n - \lambda_3) \\
+        \vdots & \vdots & \vdots & \ddots & \vdots \\
+        b_{n1}(\lambda_1 - \lambda_n) & b_{n2}(\lambda_2 - \lambda_n) & b_{n3}(\lambda_3 - \lambda_n) & \cdots & 0
+        \end{pmatrix}
+        + o(B)
+        \end{align*}
+        As $B$ has only $\frac{n(n-1)}{2}$ free parameter, so the Jacobian of the map is $\prod_{i<j}|\lambda_j-\lambda_i|$.
+    \end{proof}
+    
+    \paragraph{Step 4}  We now calculate $Z$:
+    \begin{align*}
+        Z = \int_{\mathbb{R}^N} \prod_{i<j}|\lambda_j-\lambda_i|^\beta \cdot \prod_{i=1}^N\exp(-\frac{\lambda_i^2}{2}) \dd \lambda_{1}...\dd \lambda_{N} = 
+        \frac{(2\pi)^{N/2}}{N!} \prod_{j=0}^N \frac{\Gamma(1+(j+1)\beta/2)}{\Gamma(1+\beta/2)}
+    \end{align*}
+\end{proof}
+
+\subsection{Semi-Circle Law and Marchenko–Pastur Law}
+\subsubsection{Trace Calculation}
+\begin{thm}[Tridiagonal Matrix Equivalent]
+    Consider the real symmetric tridiagonal matrix
+    \[
+    T_{\beta} = 
+    \begin{pmatrix}
+    \cN(0,1) & \frac{1}{\sqrt{2}}\chi_{\beta(n-1)} & \cdots & 0 \\
+    \frac{1}{\sqrt{2}}\chi_{\beta(n-1)} & \cN(0,1) & \cdots & 0 \\
+    \vdots & \vdots & \ddots & \vdots \\
+    0 & 0 & \cdots & \cN(0,1)
+    \end{pmatrix}
+    \]
+    where the second diagonal entries are $\chi_{\beta(n-1)}, \chi_{\beta(n-2)},... \chi_{\beta}$.
+    $\chi_k = \sqrt{\chi_k^2} = \sqrt{\sum_{i=1}^k \cN(0,1)^2}$, whose density is
+    \[
+    \frac{1}{2^{\frac{k}{2}-1}\Gamma(\frac{k}{2})}x^{k-1}e^{-\frac{x^2}{2}}.
+    \]
+    Then the eigenvalues of $T_\beta$ have the same distribution of $G\beta E$.
+\end{thm}
+
+\begin{proof}
+    We present for $\beta = 1$. By linear algebra, we can choose an orthogonal matrix $U_1$, and transform the matrix $M$ to $U_1MU_1^\top$, whose the first row is 
+    \[
+    (x_{11}, \sqrt{\sum_{k=2}^n x_{ik}^2}, 0,...,0).
+    \]
+    Note that the eigenvalues do not change after the transformation.
+    
+    We can inductively do the same operation on the rest sub-matrix.
+\end{proof}
+
+\begin{cor}
+    For $\beta = 1, 2, 4$, the law of eigenvalues $\sim \prod_{i<j} (x_i-x_j)^\beta \prod_{i=1}^N\exp(-\frac{x_i^2}{2})$.
+\end{cor}
+
+\begin{thm}
+    In fact, the corollary is true for any $\beta>0$.
+\end{thm}
+
+Now we begin to prove the semi-circle law. First we give the key result of trace calculation.
+\begin{thm}[Semi-Circle Law]
+    For each $k>0, \beta>0$, we have
+    \[
+    \frac{1}{N^{\frac{k}{2}+1}} \tr(T_\beta^k)=
+    \frac{1}{N^{\frac{k}{2}+1}}\sum_{i=1}^N X_i^k
+    \xrightarrow{N\to \infty, \text{in probability}} 
+    \begin{cases}
+        0&, \quad \text{k is odd}; \\
+        (\frac{\beta}{2})^k \Cat_{\frac{k}{2}}&, 
+        \quad \text{k is even}.
+    \end{cases}
+    \]
+    where $\Cat_k$ is the k-the catalan number defined as
+    \[
+    \Cat_k = \frac{1}{k+1} \binom{2k}{k}.
+    \]
+\end{thm}
+
+\begin{proof}
+    By SLLN, we have
+    \begin{align*}
+        &\lim_{N\to \infty} \frac{\chi_{\beta(N-1)}}{\sqrt{2N}} = \sqrt{\frac{\beta}{2}},\\
+        &\lim_{N\to \infty} \frac{\chi_{\beta(N-\alpha N)}}{\sqrt{2N}} = \sqrt{\frac{\beta(1-\alpha)}{2}}.
+    \end{align*}
+    So by the definition of the trace, we have
+    \begin{align*}
+    \tr \ \left(\frac{T_\beta}{\sqrt{N}}\right)^k 
+    &= \sum_{m=1}^N \sum_{\substack{\text{k-step paths} \\ \text{from } m \text{ to } m}} 
+    \left(\ \textcolor{gray}{ \text{some} 
+    \ \frac{\chi_{\beta(N-i)}}{\sqrt{2N}} } \right)
+    \left(\ \textcolor{gray}{ \text{some} 
+    \ \frac{\mathcal{N}(0,1)}{\sqrt{N}} }\right)\\
+    &=\sum_{m=1}^N \left( \# {\text{k-step paths from } m \text{ to } m} \right) \sqrt{\frac{\beta}{2}\left( \frac{N-m}{N} \right)^k} + o(N).
+    \end{align*}
+    The second equation follows from that if there exists "some $\frac{\mathcal{N}(0,1)}{\sqrt{N}}$", the term vanishes. 
+    When $2 \nmid k$, $\# {\text{k-step paths from } m \text{ to } m}$ is zero.
+    When $2\mid k$, $\# {\text{k-step paths from } m \text{ to } m} = \binom{k}{\frac{k}{2}}$. Approximate the summation by integration and we have
+    \[
+    \frac{1}{N} \tr \ \left(\frac{T_\beta}{\sqrt{N}}\right)^k \to \binom{k}{\frac{k}{2}} \left(\frac{\beta}{2}\right)^{\frac{k}{2}} \int_0^1 x^{\frac{k}{2}}\dd x = \Cat_{\frac{k}{2}} \left(\frac{\beta}{2}\right)^{\frac{k}{2}}
+    \]
+\end{proof}
+
+Now we introduce the semi-circle distribution.
+\begin{defn}[Wiegner Semi-Circle Distribution]
+    The density of the distribution is
+    \[
+    \mu(x) = \frac{1}{2\pi} \sqrt{4-x^2}.
+    \]
+\end{defn}
+
+We use moment method to recover the proof and give the definition.
+\begin{cor}[Moment Analysis]
+    Let $m_k$ are moments of $T_\beta$ and we have
+    \[
+    m_u = \begin{cases}
+        0&,\quad u \text{ is odd}; \\
+        \frac{1}{\frac{u}{2}+1}\binom{u}{\frac{u}{2}} &,\quad u \text{ is even}.
+    \end{cases}
+    \]
+\end{cor}
+
+\begin{thm}[Moment of Semi-Circle Distribution]
+    \label{thm:scl}
+    $m_k$ are moments of semi-circle law and
+    \[
+    m_k = \int_{-2}^2 \mu(x) x^k \dd x.
+    \]
+\end{thm}
+
+\begin{proof}{(Method I)}
+    We just calculate
+    \[
+    m_k = \int \frac{1}{\sqrt{2\pi}} \sqrt{4-x^2}x^k \dd x.
+    \]
+    Let $x = 2\cos\theta$, and by inductive calculation, we derive the results.
+\end{proof}
+
+However, we are not satisfied for the calculation is not so intuitive. We then introduce another proof.
+
+\begin{proof}{(Method II)}
+Introduce generating function: 
+\[
+G(z) = \sum_{k=0}^\infty m_k z^{-k-1},
+\]
+$m_0 =1$. By classical results, we have
+\[
+\sum_{n=0}^\infty \Cat_n x^n = \frac{1-\sqrt{1-4x}}{2x} =: C(x).
+\]
+Now we can derive the expression of $G(z)$ using $C(x)$.
+\[
+    G(z) = \sum_{k=0}^\infty m_k z^{-k-1} = \sum_{l=0}^\infty \Cat_l z^{-2l-1} = \frac{z-\sqrt{z^2-4}}{2}.
+\]
+Next we introduce two propositions.
+\begin{prop}[Stieltjes Transform]
+    \label{prop:2.8}
+    \[
+    G(z) = \int \frac{\mu(x)}{z-x} \dd x.
+    \]
+\end{prop}
+\begin{proof}
+    By Taylor expansion, we have
+    \begin{align*}
+    \int \frac{\mu(x)}{z-x} \dd x 
+    &= \frac{1}{z} \int \frac{\mu(x)}{1-\frac{x}{z}}\dd x\\
+    &= \frac{1}{z}\int \mu(x)\sum_{k=0}^\infty\left( \frac{x}{z}\right)^k\\
+    &=\sum_{k=0}^\infty m_k z^{-k-1} \\
+    &= G(z)
+    \end{align*}
+\end{proof}
+
+\begin{prop}
+    \label{prop:2.9}
+    \[
+    \mu(x_0) = -\frac{1}{\pi} \lim_{y_0\to 0^+} \Im (G(x_0+iy_0)).
+    \]
+\end{prop}
+\begin{rem}
+    We can just add a perturbation onto the imagine axis and obtain the information of the point.
+\end{rem}
+
+\begin{proof}
+    By proposition \ref{prop:2.8}, we have
+    \begin{align}
+        -\frac{1}{\pi}  \Im (G(x_0+iy_0))
+        &= -\frac{1}{\pi} \int  \Im \frac{1}{x_0+iy_0-x} \mu(x)\dd x\\
+        &= -\frac{1}{\pi} \int \Im \frac{x_0-x-iy_0}{(x-x_0)^2+y_0^2}\mu(x) \dd x\\
+        &= \int \frac{1}{\pi} \frac{y_0}{(x-x_0)^2+y_0^2}\mu(x) \dd x.
+    \end{align}
+    Notice that $\frac{1}{\pi} \frac{y_0}{(x-x_0)^2+y_0^2}$ is a "good" kernel, and thus as $y_0\to 0$
+    \[
+    \int \frac{1}{\pi} \frac{y_0}{(x-x_0)^2+y_0^2}\mu(x) \dd x \to \mu(x_0).
+    \]
+\end{proof}
+Return to the Theorem \ref{thm:scl}, by proposition \ref{prop:2.9}
+\[
+\mu(x_0) = -\frac{1}{\pi} \lim_{y\to 0^+} \Im \left( \frac{1}{2}\left[(x+iy) - \sqrt{(x+iy)^2 - 4)}\right]
+\right) = \begin{cases}
+    0  &, \quad |x|>2;\\
+    \frac{\sqrt{4-x^2}}{2\pi} &,\quad |x|\le 2.
+\end{cases}
+\]
+\end{proof}
+
+Now we are prepared to formally state and prove the semi-circle law.
+\begin{thm}[Semi-Circle Law]
+    Let $\lambda_1 < ... <\lambda_N$ be eigenvalues of G$\beta$E. Set $x_i = \lambda_i\sqrt{\frac{2}{\beta N}}$ and let $\mu_N$ be their empirical measure: $\mu_N = \frac{1}{\sqrt{N}}\sum_{i=1}^N \delta_{x_i}$. Then
+    \[
+    \lim_{N\to \infty} \mu_N = \frac{1}{2\pi} \sqrt{4-x^2} \mathbbm{1}_{|x|\le 2} = \mu_{\text{circle}}(x)
+    \]
+    weakly in probability, which means $\forall$ bounded continuous function $f(x)$
+    \[
+    \lim_{N\to \infty} \int_{\RR} f(x)\mu_N(x) = \int_{\RR} f(x)\mu(x) \dd x.
+    \]
+\end{thm}
+
+\begin{proof}
+    We prove the result in four steps.
+    \paragraph{Step 1}  The results hold for $f(x) = x^k$.
+    
+    \paragraph{Step 2}  The results hold for any polynomials. 
+    
+    \paragraph{Step 3}  Take $L>2$, the results hold for $f(x) = \mathbbm{1}_{|x|>L} x^k$.
+    We have
+    \begin{align*}
+        \left|\int f(x)\mu_N(\dd x)\right| 
+        &= \left|\int x^k\mu_N(\dd x)\right|\\
+        &\le L^{-2m} \int_{|x|\ge L} x^{2k+2m}\mu_N(\dd x)\\
+        &\to L^{-2m} \int x^{2k+2m} \mu(\dd x)\\
+        &\le L^{-2m} 2^{2k+2m} = 2^{2k} \left(\frac{2}{L}\right)^m \to 0. 
+    \end{align*}
+    
+    \paragraph{Step 4}  By step 3, we can restrict the support set of $f$ on a compact set, i.e. $[-4, 4]$. Apply the Weierstrass theorem and we get the proof.
+\end{proof}
+
+At last, we give three generalizations of the semi-circle law. Next theorem tells us the gaussian assumption of the semi-circle law is not neccessary.
+\begin{thm}[Generalization]
+    Let $z_{ij}, i<j$ be i.i.d. random variables with finite moments. $\EE z_{ij} = 0$ and $\EE z_{ij}^2 = \frac{1}{2}$. Let $Y_i$ be i.i.d. with finite moments. Then the semi-circle law still holds for the matrix with entries $Y_i$ and $z_{ij}$.
+\end{thm}
+
+\subsubsection{Marchenko–Pastur Law}
+Now we consider the case where the matrix is not square.
+Let $X$ be an $N\times S$ random matrix whose elements are Gaussian with parameter $\beta > 0$ (different form according to $\beta$).
+Assume that $N, S\to\infty$ in such a way that $N/S \to \gamma^2 \in (0,1)$.
+Let $\lambda_1, \lambda_2,\ldots, \lambda_N$ denote the eigenvalues of $\frac{1}{S}XX^*$, and define the empirical spectral measure
+\[
+\rho^N = \frac{1}{N}\sum_{i=1}^N \delta_{\lambda_i}.
+\]
+ 
+\begin{thm}[Marchenko--Pastur Law]
+As $N\to\infty$ (with $N/S\to \gamma^2\in(0,1)$), the empirical spectral measure $\rho^N$ converges weakly, in probability, to the Marchenko--Pastur distribution $\mu_{\mathrm{MP}}$ with density
+\[
+\frac{\dd\mu_{\mathrm{MP}}}{\dd x}(x)
+= \frac{1}{2\pi\beta\gamma^2}\,
+\frac{\sqrt{(\lambda_+ - x)(x-\lambda_-)}}{x}\,
+\mathbf{1}_{[\lambda_-,\,\lambda_+]}(x),
+\]
+where
+\[
+\lambda_+ = \beta(1+\gamma)^2, \qquad
+\lambda_- = \beta(1-\gamma)^2.
+\]
+\end{thm}
+
+\begin{proof} We calculate the moments for $\rho^N$ and $\mu_{\mathrm{MP}}$ separately
+    \paragraph{Step 1} We claim that
+    \[
+    \lim_{N,S\to \infty} \frac{1}{NS^k}\tr[(XX^*)^k] = \beta^k \sum_{r=0}^{k-1} \frac{\gamma^{2r}}{r+1} \binom{k}{r} \binom{k-1}{r}.
+    \]
+
+    Notice that as $S\to \infty$
+    \[
+    \frac{\chi_{aS}}{\sqrt{S}} \to \sqrt{a},
+    \]
+    we have
+    \begin{align*}
+        \operatorname{LHS} &= \lim_{S,N\to\infty}\frac{1}{NS^k} \sum_{m=1}^N\sum_{\substack{\text{k-step paths} \\ \text{from } m \text{ to } m}} (\text{diagonal entries})(\text{sub-diagonal entries})\\
+        &= \lim_{S,N\to \infty} \frac{1}{NS^k} \sum_{m=1}^N \sum_{i=0}^{[k/2]} \left(
+        \chi_{\beta(N-m)}\chi_{\beta(S-m+1)}
+        \right)^{2i}\chi_{S+N-2m-2}^{2(k-2i)} \binom{k}{2i}\binom{2i}{i}
+    \end{align*}
+    By replacing $\chi$ by its limit, we have
+    \[
+    \frac{\chi_{\beta(N-m)}\chi_{\beta(S-m+1)}}{S} \to \beta \sqrt{(\gamma^2-\frac{m}{S})(1-\frac{m}{S})}
+    \]
+    \[
+    \frac{\chi^2_{\beta(S+N-2m+2)}}{S} \to \beta(1+\gamma^2 - 2\frac{m}{S})
+    \]
+    Then we approximate the sum by integral
+    \begin{align*}
+    \operatorname{LHS} 
+    &= \frac{\beta^k}{\gamma^2} \sum_{i=0}^{[k/2]} \binom{k}{2i}\binom{2i}{i} \int_0^{\gamma^2} (\gamma^2-t)^i(1-t)^i (1+\gamma^2-2t)^{k-2i}\dd t\\
+    &=\frac{\beta^k}{\gamma^2} \sum_{i=0}^{[k/2]} \binom{k}{2i}\binom{2i}{i} \int_0^{\gamma^2} u^i(1-\gamma^2+u)^i (1-\gamma^2+2u)^{k-2i}\dd u
+    \end{align*}
+    We claim that
+    \[
+    \frac{1}{\gamma^2}\sum_{i=0}^{[k/2]} \binom{k}{2i}\binom{2i}{i} \int_0^{\gamma^2} u^i(1-\gamma^2+u)^i (1-\gamma^2+2u)^{k-2i}\dd u = \sum_{r=0}^{k-1} \frac{\gamma^{2r}}{r+1} \binom{k}{r} \binom{k-1}{r}.
+    \]
+    and we obtain the proof.
+
+    The proof of the claim: 
+    Denote the left hand side as A. First, we observe that
+    \begin{equation}
+        \label{eq:key}
+        \operatorname{A} = \text{The sum of coefficients of all the }x^iy^i \text{ in} \int_{0}^{\gamma^2} [xu+y(1-\gamma^2 +u)+(1-\gamma^2+2u)]^k\dd u
+    \end{equation}
+    Denote B as the integral of (\ref{eq:key})
+    \begin{align*}
+        B &= \frac{1}{\gamma^2}\frac{[(x+1)\gamma^2+(y+1)]^{k+1} - [(y+1)(1-\gamma^2)]^{k+1}}{(x+y+2)(k+1)}\\
+        &=\frac{1}{k+1}\sum_{l=0}^k [(y+1)(1-\gamma^2)]^l [(x+1)\gamma^2+y+1]^{k-l}.
+    \end{align*}
+    To calculate the coefficients, we can let $x = \frac{1}{y}$ and calculate the constant coefficient.
+    \begin{align*}
+        \operatorname{B} &= \frac{1}{k+1} \sum_{l=0}^k [(y+1) (1-\gamma^2)]^l
+        \left(\left(\frac{1}{y}+1\right)\gamma^2 + y+1\right)^{k-l}\\
+        &=\frac{(y+1)^k}{k+1}
+        \sum_{l=0}^k(1-\gamma^2)^l(\frac{1}{y}\gamma^2+1)^{k-l}\\
+        &=\frac{(y+1)^k}{k+1} \frac{(\frac{1}{y}\gamma^2+1)^{k+1} - (1-\gamma^2)^{k+1}}
+        {\frac{1}{y}\gamma^2 + \gamma^2}\\
+        &=\frac{y(y+1)^{k-1}}{(k+1)\gamma^2} \left(\left(\frac{1}{y}\gamma^2+1\right)^{k+1} - (1-\gamma^2)^{k+1}\right)
+    \end{align*}
+    Then the constant coefficient is
+    \[
+    \frac{1}{(k+1)\gamma^2} \sum_{r=0}^{k-1} \binom{k-1}{r} \binom{k+1}{r+1} \gamma^{2r+2} = \sum_{r=0}^{k-1} \frac{\gamma^{2r}}{r+1} \binom{k}{r} \binom{k-1}{r}.
+    \]
+    
+    \paragraph{Step 2} We claim that $\lambda_{+} = \beta(1+\gamma)^2$ and $\lambda_{-} = \beta(1-\gamma)^2$.
+    
+    Define the density of the limit distribution
+    \[
+    \mu(x) = \frac{1}{2\pi\gamma^2}\frac{\sqrt{(\lambda_{+}-x)(x-\lambda_{-})}}{x} \mathbbm{1}_{[\lambda_{-}, \lambda_{+}]}
+    \]
+    and $\mu_N = \rho^N$.
+    
+    The calculation below is inspired by \href{http://ndl.ethernet.edu.et/bitstream/123456789/60805/1/140.pdf}{Zhidong Bai's book}.
+    First, we calculate the moment of $\mu(x)$, for $m\ge 1$,
+    \begin{align*}
+        \EE_{\mu} x^m &= \int x^m \mu(x)\dd x\\
+        &= \frac{1}{2\pi\gamma^2}\int x^{m-1} \sqrt{(\lambda_{+}-x)(x-\lambda_{-})} \dd x\\
+        &= \frac{1}{2\pi\gamma^2}(2\gamma)^2\int_{-1}^1 (1+\gamma^2+2\gamma u)^{m-1}\sqrt{1-u^2}\dd u
+        \\
+        &(\text{by setting }x =\beta(1+\gamma^2+2\gamma u))\\
+        &= \beta^m\frac{1}{\pi}\sum_{l=0}^{[(m-1)/2]} \binom{m-1}{2l}(1+\gamma^2)^{m-1-2l}
+        (4\gamma^2)^l
+        \int_{-1}^1 u^{2l}\sqrt{1-u^2}\dd u\\
+        &= \beta^m
+        \sum_{l=0}^{[(m-1)/2]} \binom{m-1}{2l} 
+        \frac{1}{l+1}\binom{2l}{l} (1+\gamma^2)^{m-1-2l} \gamma^{2l}\\
+        &= \beta^m\sum_{l=0}^{[(m-1)/2]}\sum_{s=0}^{m-1-l} \frac{(m-1)!}{l!(l+1)!s!(m-1-2l-s)!}\gamma^{2(l+s)}\\
+        &=\beta^m \frac{1}{m}\sum_{r=0}^{m-1} \gamma^{2r} \binom{m}{r} \sum_{l=0}^{r\wedge(m-1-r)}\binom{r}{l} \binom{m-r}{m-r-l-1}\\
+        &=\beta^m \frac{1}{m}\sum_{r=0}^{m-1}\binom{m}{r}\binom{m}{r+1}\gamma^{2r}\\
+        &=\beta^m \sum_{r=0}^{m-1}\frac{1}{r+1}\binom{m}{r}\binom{m-1}{r}\gamma^{2r}.
+    \end{align*}
+
+    Next, we notice that
+    \[
+        \EE_{\mu_N} x^m =\frac{1}{N} \sum_{i=1}^N \lambda_i^N = \frac{1}{N}\tr\left[\left(\frac{XX^*}{S}\right)^m\right]
+    \]
+    and
+    \[
+    \lim_{N\to \infty} \frac{1}{N}\tr\left[\left(\frac{XX^*}{S}\right)^m\right] = \beta^m \sum_{r=0}^{m-1}\frac{1}{r+1}\binom{m}{r}\binom{m-1}{r}\gamma^{2r}.
+    \]
+    So we have
+    \[
+    \lim_{N\to \infty}\EE_{\mu_N} x^m = \EE_{\mu} x^m.
+    \]
+    Similar to the proof of semi-circle law, we have $\rho^N$ converges (weakly, in probability) to the Marchenko-Pastur law.
+\end{proof}
+
+
+\subsection{BBP Transition}
+In the spiked model $\Sigma = I + \theta\, vv^*$, Baik, Ben Arous, and P\'{e}ch\'{e} (2005) discovered a phase transition for $\lambda_{\max}$ of $\Sigma$. In general form, it is stated as
+
+\begin{thm}[Spiked Random Matrices]
+    \label{thm:9.1}
+    Let $\lambda_1<\lambda_2<\cdots<\lambda_N$ are $N$ eigenvalues of 
+    \[
+    C = \sqrt{N}a vv^* +\sqrt{\frac{2}{\beta}}G\beta E,
+    \]
+    where $\|v\|=1$
+    Then there exists $a_{crit}$ such that
+    \begin{enumerate}
+        \item If $a>a_{crit} = 1$, then 
+        \[
+        \lim_{N\to\infty} \frac{\lambda_N}{\sqrt{N}} = a+\frac{1}{a} >2.
+        \]
+        \item If $a<a_{crit}$, then 
+        \[
+        \lim_{N\to\infty} \frac{\lambda_N}{\sqrt{N}} = 2.
+        \]
+    \end{enumerate}
+\end{thm}
+By the theorem, we can easily get
+\begin{cor}
+    \[
+    \hat{a} = \frac{1}{2}\left(
+    \frac{\lambda_N}{\sqrt{N}}+\sqrt{\frac{\lambda_N^2}{N}-4}
+    \right) \overset{N\to\infty}{\longrightarrow} a.
+    \]
+\end{cor}
+\begin{thm}[Recover $v$]
+    \label{thm:9.2}
+    In the setting of Theorem \ref{thm:9.1}. Let $\hat{v}$ denote the eigenvector corresponding to $\lambda_N$ and let $\phi$ be the angle between $v$ and $\hat{v}$,
+    \[
+    \lim_{N\to\infty} \sin\phi = \frac{1}{a} \wedge 1.
+    \]
+\end{thm}
+\begin{proof}
+    We prove the results in three steps.
+    \paragraph{Step 1} \ $a, \lambda_N$ and $\phi$ are unchanged under orthogonal/unitary transformations of matrix $C$. We do two transformations:
+    \begin{itemize}
+        \item Rotate $v$ ti be the first basis vector $(1, 0^{N-1})$.
+        \item Rotate in the orthogonal complement of $(1, 0^{N-1})$, so that the $(N-1)\times (N-1)$ bottom random corner of G$\beta$E becomes diagonal, while the law of the first row and column of G$\beta$E preserved.
+    \end{itemize}
+    \paragraph{Step 2} \ Now we brought $C$ into
+    \[
+    \hat{C} =
+    \begin{pmatrix}
+    a \delta_N + \mathcal{N}(0, \frac{2}{\beta}) & \xi_2 & \xi_3 & \dots & \xi_N \\
+    \bar{\xi}_2 & \mu_2 &  &  &  \\
+    \bar{\xi}_3 &  & \mu_3 &  &  \\
+    \vdots &  &  & \ddots &  \\
+    \bar{\xi}_N &  &  &  & \mu_N
+    \end{pmatrix}
+    \]
+    and 
+    $\mu_2,\cdots,\mu_N$ be the eigenvalues of $\sqrt{\frac{2}{\beta}} G\beta E$ and $\xi_2,\cdots,\xi_N \overset{i.i.d}{\sim} \sqrt{\frac{2}{\beta}}$ corresponding Normal distribution.
+    We find an eigenvector $(x_1,\cdots,x_N)$ of $\tilde{C}$ with eigenvalues $\lambda$
+    \[
+    \begin{cases}
+        x_1\left(a\sqrt{N}+\cN\left(0,\frac{2}{\beta}\right)\right)+\sum_{i=1}^N\xi_ix_i=\lambda x_1\\
+        x_1\bar{\xi}_2+\mu_2x_2=\lambda x_2\Rightarrow x_2=\frac{x_1\bar{\xi}_2}{\lambda-\mu_2}\\
+        \qquad\qquad\qquad\vdots\\
+        x_1\bar{\xi}_N+\mu_Nx_N=\lambda x_N\Rightarrow x_N=\frac{x_1\bar{\xi}_N}{\lambda-\mu_N}
+    \end{cases}
+    \Longrightarrow
+    \begin{cases}
+        x_2 = \frac{\bar{\xi}_2}{\lambda-\mu_2}\\
+        \qquad\vdots\\
+        x_N = \frac{\bar{\xi}_N}{\lambda-\mu_N}
+    \end{cases}
+    \]
+    Plug the $2 \sim N$ equations into the first line and we get
+    \begin{equation}
+        x_1 \left[a\sqrt{N}+\cN\left(0,\frac{2}{\beta}\right) - \lambda + \sum_{i=1}^N\frac{\xi_i\bar{\xi}_i}{\lambda-\mu_i}
+        \right] = 0. \tag{$\ast$}
+    \end{equation}
+    By interpolating of eigenvalues, $\title{C}$ has 1 eigenvalue larger than $\mu_N$. Only this eigenvalue has chance to become larger than $2\sqrt{N}$ as $\frac{\mu_N}{\sqrt{N}} \to 2$. Denote $y = \frac{\lambda_N}{\sqrt{N}}$ and investigate ($\ast$) for $y>2$.
+    \[
+    a + \frac{\cN\left(0,\frac{2}{\beta}\right)}{\sqrt{N}} - y + \frac{1}{N} \sum_{i=2}^N \frac{\xi_i\bar{\xi}_i}{y - \frac{\mu_i}{\sqrt{N}}} = 0. \tag{$\ast\ast$}
+    \]
+    By LLN, we have
+    \[
+    \frac{1}{N} \sum_{i=2}^N \frac{\xi_i\bar{\xi}_i}{y - \frac{\mu_i}{\sqrt{N}}} \approx \frac{1}{N} \sum_{i=2}^N \frac{1}{y - \frac{\mu_i}{\sqrt{N}}} \to G(y) = \frac{1}{2}(y- \sqrt{y^2-4}).
+    \]
+    Then we have
+    \[
+    a - y + \frac{1}{2}(y- \sqrt{y^2-4}) = 0 \Longrightarrow y = a+ \frac{1}{a},
+    \]
+    and this proves Theorem \ref{thm:9.1}.
+
+    \paragraph{Step 3} \ For Theorem \ref{thm:9.2}, we notice that the eigenvalues are
+    \[
+    (1,0,\cdots,0) \text{ and } \left(1, \frac{\bar{\xi}_2}{\lambda-\mu_2},\cdots,\frac{\bar{\xi}_N}{\lambda-\mu_N}
+    \right),
+    \]
+    and we have
+    \[
+    \cos^2 \phi = \frac{1}{1+\sum_{i=2}^N\frac{\xi_i\bar{\xi}_i}{(\lambda-\mu_i)^2}} \to \frac{1}{1+\frac{1}{2}\frac{y}{\sqrt{y^2-4}}-\frac{1}{2}} = \frac{2\sqrt{y^2-4}}{y+\sqrt{y^2-4}}.
+    \]
+    As $y = a+\frac{1}{a}$, we have
+    \[
+    \sin^2 \phi \to \frac{1}{a^2}.
+    \]
+\end{proof}
+
+\subsection{CLT for Eigenvalues}
+Similar to the CLT for random variables, we have the following theorem.
+\begin{thm}
+\label{RMT_CLT}
+Let $f$ be analytic in a small neighboring of $[-2,2]$. Let $\lambda_1\le\cdots\le\lambda_N$ be e.v. of $\sqrt{\frac{2}{\beta}}G\beta E,\beta>0$. Then
+\[
+\sum_{i=1}^N f\left(\frac{\lambda_i}{\sqrt{N}}\right)-N\int f(x)\frac{1}{2\pi}\sqrt{4-x^2}
+\]
+converges to dist to a Gaussian r.v. $\xi_f$ jointly other several $f=f_1,\dots,f_K$ with
+\[
+\mathbb{E}[\xi_f]=\left(\frac{2}{\beta}-1\right)m(f),\quad \operatorname{Cov}(\xi_f,\xi_g)=\frac{2}{\beta}C(f,g)
+\]
+\[
+m(f)=\frac{1}{4}(f(2)+f(-2))-\frac{1}{2\pi}\int_{-2}^2
+\frac{f(x)}{\sqrt{4-x^2}}\dd x
+\]
+\[
+C(f,g) = \frac{1}{4\pi} \int_{-2}^2 \int_{-2}^2 \frac{(f(x)-f(y))(g(x)-g(y))}{(x-y)^2}\frac{4-xy}{\sqrt{4-x^2}\sqrt{4-y^2}}\dd x\dd y.
+\]
+or
+\[
+C\left(\frac{1}{z-x},\frac{1}{w-x}\right)=-\frac{1}{2(z-w)^2}\left(1-\frac{zw-4}{\sqrt{z^2-4}\sqrt{w^2-4}}\right)
+\quad \text{for $z,w$ out of }[-2,2]
+\]
+where $m(f)$ and $C(f,g)$ do not depend on $\beta$.
+\end{thm}
+
+\begin{proof}
+    The main idea is fancy moments method.
+
+\begin{lem}[Wick's formula]
+\label{lem:12.1}
+\[
+\mathbb{E}[\eta_1,\dots,\eta_m]=\sum_{\operatorname{perfect matchings}}\prod_{(i,j)\in\operatorname{mathching}}\sigma_{ij}
+\]
+\end{lem}
+\begin{proof}
+    By Laplacian's transform
+    \[
+    \EE [e^{t_1\eta_1+\cdots +t_m\eta_m}] = \exp\left(\frac{1}{2} \sum_{i,j=1}^m t_it_j\sigma_{ij} \right).
+    \]
+    Hence, we take derivative and get the expectation
+    \[
+    \EE [\eta_1\cdots\eta_m] = \frac{\partial^m}{\partial t_1\cdots\partial t_m} \left[\exp\left(\frac{1}{2} \sum_{i,j=1}^m t_it_j\sigma_{ij} \right)\right] \bigg|_{t_1 = \cdots = t_m = 0}.
+    \]
+    Equivalently, this is the coefficient of $t_1\cdots t_m$ in Taylor's expansion.
+    \[
+    = \sum_{ij} 2^{-\frac{m}{2}} \prod_{ij} \sigma_{ij}.
+    \]
+    Notice that each perfect match appears $2^{\frac{m}{2}}$ times, we prove the Lemma \ref{lem:12.1}.
+\end{proof}
+
+\paragraph{Takeaway} Moments can be reconstructed by applying a differential operator to Laplace transform.
+
+\begin{lem}
+\label{lem:12.2}
+Introduce an operator
+\[
+\mathcal{D}_a=\prod_{i,j}(z_i-z_j)^{-1}\left(\sum_{i=1}^NT_{a,i}\right)\prod_{i,j}(z_i-z_j)
+\]
+\[
+T_{a,i}f(z_1,\dots,z_N)=f(z_1,\dots,z_{i-1},z_i+a,z_{i+1},\dots,z_N)
+\]
+Then for $\lambda_1,\cdots,\lambda_N$ eigenvalues of GUE, we have 
+\[
+\underbrace{\EE \prod_{k=1}^M \left[\sum_{i=1}^N e^{a_k\lambda_i}\right]}_{\text{Moments of linear statistic for $f(\lambda)=e^{a\lambda}$}} = \underbrace{\mathcal{D}_{a_m} \cdots \mathcal{D}_{a_1} }_{\text{They all commute}} \exp\left(\sum_{i=1}^N \frac{z_i^2}{2}\right) \bigg|_{z_1 = \cdots = z_N = 0}.
+\]
+\end{lem}
+\begin{proof}
+From Lecture 6,
+\[
+\EE\exp(\operatorname{Tr(GUE\cdot Z)})=\EE B_{\lambda_1,\dots,\lambda_N}(z_1,\dots,z_N)=\exp\left(\sum_{i=1}^N\frac{\lambda_i^2}{2}\right)
+\]
+where $Z=\operatorname{diag}(z_1,\dots,z_N)$ and $\lambda_1,\dots,\lambda_N$ denote the e.v. of GUE.
+
+Then act with $\mathcal{D}$
+\[
+B_{\lambda_1,\dots,\lambda_N}(z_1,\dots,z_N)=\prod_{K=1}^N(K!)\cdot\frac{\operatorname{det}[\exp(\lambda_iz_j)]}{\prod_{i,j}(\lambda_i-\lambda_j)(z_i-z_j)}.
+\]
+\[
+\mathcal{D}=\prod_{i,j}(z_i-z_j)^{-1}\left(\sum_{i=1}^NT_{a,i}\right)\prod_{i,j}(z_i-z_j).
+\]
+So $B$ is eigenfunction of $\mathcal{D}$ with eigenvalue $\sum_{i=1}^N \exp(a\lambda_i)$. Hence,
+\[
+\EE\left[
+\prod_{k=1}^m \left(\sum_{i=1}^N e^{a_k\lambda_i}\right)
+\right] B_{\lambda_1 \cdots \lambda_N} (z_1,\cdots,z_N) = \mathcal{D}_{a_m} \cdots \mathcal{D}_{a_1} \exp\left(\sum_{i=1}^N\frac{\lambda_i^2}{2}\right).
+\]
+Plug $z_1,\dots,z_N=0$ and notice $B(0,\cdots,0)=1$.
+\end{proof}
+\begin{lem}
+\label{lem:12.3}
+\[
+\mathcal{D} f(z_1)\cdots f(z_N)= f(z_1)\cdots f(z_N)\frac{a^{-1}}{2\pi i}\oint_{\{z_1,\dots,z_N\}}\left[\prod_{j=1}^N\frac{v+a-z_j}{v-z_j}\right]\frac{f(v+a)}{f(v)}
+\]
+
+The contour encloses $z_1,\dots,z_N$ with no singularities of $f$.
+\end{lem}
+\begin{proof}
+\begin{align*}
+    \mathcal{D} f(z_1) \cdots f(z_N) &= \sum_{i=1}^N \left[\prod_{j\neq i} \frac{z_i+a-z_j}{z_i-z_j}\right]\frac{f(z_i+a)}{f(z_i)}\cdot f(z_1)\cdots f(z_N)\\
+    &=\frac{a^{-1}}{2\pi i}\oint_{\{z_1,\dots,z_N\}}\prod_{i=1}^N\frac{v+a-z_j}{v-z_j}\cdot\frac{f(v+a)}{f(v)}\dd v f(z_1)\cdots f(z_N)
+\end{align*}
+\end{proof}
+
+\begin{cor}
+\label{RMT_CLT_cor}
+    \begin{align*}
+    \EE\left[\prod_{K=1}^m\sum_{i=1}^N e^{a_K\lambda_i}\right] = &\frac{(a_1\cdots a_m)^{-1}}{(2\pi i)^m} \oint \sum_{k=1}^m \left[ \frac{(v_k+a_k)^N}{v_k^N} \exp\left(\frac{a_k^2}{2} + a_kv_k\right)\right] \\
+    &\prod_{k<l} \frac{v_k-v_l+a_k-a_l}{v_k-v_l-a_l} \cdot \frac{v_k-v_l}{v_k-v_l+a_k} \dd v_1\cdots \dd v_k.
+    \end{align*}
+\end{cor}
+\begin{proof}
+We compute $\mathcal{D}_{a_m} \cdots \mathcal{D}_{a_1} \exp(\frac{z_i^2}{2})\cdots\exp(\frac{z_N^2}{2})$. By sequentially applying Lemma \ref{lem:12.3} and then setting $z_1=\cdots=z_N=0$ at the end
+\end{proof}
+
+Now we prove Theorem~\ref{RMT_CLT} for $\beta=2,f(\frac{\lambda}{\sqrt{N}})=\exp(a\cdot\frac{\lambda}{\sqrt{N}})$
+
+\paragraph{Step 1: Expectation}  By Corollary~\ref{RMT_CLT_cor} with $m=1$
+\[
+\EE\left[\sum\exp\left(a\cdot\frac{\lambda_i}{\sqrt{N}}\right)\right]=\frac{(\frac{a}{\sqrt{n}})^{-1}}{2\pi i}\oint_{\{0\}}\left(\frac{v+\frac{a}{\sqrt{N}}}{v}\right)^N\exp\left(\frac{a^2}{2N}+\frac{a}{\sqrt{N}}v\right)\dd v
+\]
+No steepest descent needed. Set $v=u\sqrt{N}$ to get
+\begin{align*}
+    &\frac{N}{a} \frac{1}{2\pi i} \oint \exp\left( N\log\left(1+\frac{a}{Nu}\right) + au + \frac{2a^2}{N}\right)\\
+    =& \frac{N}{a} \frac{1}{2\pi i} \oint \exp\left(a\left(u+\frac{1}{u}\right) + \frac{a^2}{2N} \left( 1-\frac{1}{u^2} \right)+O(N^{-2})\right)\dd u\\
+    =& \frac{N}{a} \frac{1}{2\pi i} \oint \exp\left(a\left(u+\frac{1}{u}\right)\right) \dd u + \frac{a}{4\pi i} \oint \exp\left(a\left(u+\frac{1}{u}\right)\right)\left(1-\frac{1}{u^2}\right) \dd u + O(N^{-1}).
+\end{align*}
+
+We only need to prove
+\[
+\frac{N}{a}\frac{1}{2\pi i}\oint\exp\left(a\left(u+\frac{1}{u}\right)\right)\dd u=N\int_{-2}^2\exp(ax)\frac{1}{2\pi}\sqrt{4-x^2}\dd x.
+\]
+
+We transform the contour to the unit circle and change variables $x=u+\frac{1}{u}$ ($u=\frac{1}{2}(x\pm i\sqrt{4-x^2}),\dd u=\frac{1}{2}(1\pm i\frac{-x}{\sqrt{4-x^2}})\dd x$)
+\begin{align*}
+\frac{a^{-1}}{2\pi i}\oint\exp\left(a\left(u+\frac{1}{u}\right)\right)\dd u&=\frac{a^{-1}}{2\pi i}\left(\int_{-2}
+^2e^{ax}\frac{1}{2}(1+ i\frac{-x}{\sqrt{4-x^2}})\dd x+\int_{-2}
+^2e^{ax}\frac{1}{2}(1- i\frac{-x}{\sqrt{4-x^2}})\dd x\right)\\
+&=\frac{a^{-1}}{2\pi}\int_{-2}^2e^{ax}\frac{x}{\sqrt{4-x^2}}\dd x\overset{\text{by parts}}{=}\frac{a^{-1}}{2\pi}\int_{-2}^2(ae^{ax})\sqrt{4-x^2}\dd x
+\end{align*}
+\textbf{Conclusion:}
+\[
+\EE\left[\sum_{i=1}^N\exp\left(a\frac{\lambda_i}{\sqrt{N}}\right)\right]=N\int_{-2}^2e^{ax}\frac{1}{2\pi}\sqrt{4-x^2}\dd x+O\left(N^{-1}\right)
+\]
+
+\paragraph{Step 2: Variance}
+\begin{align*}
+    &\EE\left[ \sum_{i=1}^N \exp\left(a_1\frac{\lambda_i}{\sqrt{N}}\right)  \sum_{i=1}^N \exp\left(a_2\frac{\lambda_i}{\sqrt{N}}\right)\right] - \EE\left[ \sum_{i=1}^N \exp\left(a_1\frac{\lambda_i}{\sqrt{N}}\right)\right] \EE\left[ \sum_{i=1}^N \exp\left(a_2\frac{\lambda_i}{\sqrt{N}}\right)\right]\\
+    =& N\frac{(a_1a_2)^{-1}}{(2\pi i)^2} \oiint \prod_{k=1}^2 \left( \frac{v_k + \frac{a_k}{\sqrt{N}}}{v_k}\right)^N \exp\left(\frac{a_k^2}{2N} + \frac{a_kv_k}{N}\right)\cdot \left[ \frac{v_1-v_2+\frac{a_1}{\sqrt{N}}-\frac{a_2}{\sqrt{N}}}{(v_1-v_2-\frac{a_2}{\sqrt{N}})(v_1-v_2+\frac{a_1}{\sqrt{N}})} - 1\right]\dd v_1 \dd v_2.
+    \\
+    \approx&N^2\frac{(a_1a_2)^{-1}}{2\pi i^2}\oiint\exp\left(a_1\left(v_1+\frac{1}{v_1}\right)+a_2\left(v_2+\frac{1}{v_2}\right)\right)
+    \left[\frac{1+\frac{a_1-a_2}{N(u_1-u_2)}}{(1-\frac{a_2}{N(u_1-u_2)})(1+\frac{a_1}{N(u_1-u_2)})}\right]\dd u_1\dd u_2.
+    \\
+    =& N^2 \frac{(a_1a_2)^{-1}}{(2\pi i)^2} \oiint \exp\left(a_1\left(v_1+\frac{1}{v_1}\right)+a_2\left(v_2+\frac{1}{v_2}\right)\right)
+    \left[\frac{a_1 a_2}{N^2(u_1-u_2)^2}\right]\dd u_1\dd u_2.
+\end{align*}
+\textbf{Conclusion:} Variance $\to \frac{1}{(2\pi i)^2} \oiint \exp\left(a_1\left(v_1+\frac{1}{v_1}\right)+a_2\left(v_2+\frac{1}{v_2}\right)\right) \frac{\dd u_1\dd u_2}{(u_1-u_2)^2}$.
+
+Match this with formula in Theorem 1. Hint: Either directly with the 1st formula for $C(f,g)$, or
+\[
+\sum_{i=1}^Nf(\lambda_i)=\frac{1}{2\pi i}\oint_{\text{around all }\lambda_i}f(z)\sum_{i=1}^N\frac{1}{z-\lambda_i}\dd z
+\]
+and use it to compute with $C(\frac{1}{z-x},\frac{1}{w-x})$ in Theorems.
+
+\paragraph{Step 3: Gaussianity} We need to show that 
+\[
+\EE\left[\prod_{k=1}^m
+\left(\sum_{i=1}^N\exp\left(a_k\frac{\lambda_i}{\sqrt{N}}\right)-\EE\sum_{i=1}^N\exp\left(a_k\frac{\lambda_i}{\sqrt{N}}\right)\right)\right] \to \text{expressions of the Wick's formula in Lemma \ref{lem:12.1}}.
+\]
+All of them have exactly the same $\prod_{k=1}^m$ part, but cross term part $\prod_{k<l}$ varies.
+As in Steps 1,2, we change variables $u_k=\sqrt{N}v_k$ and use
+\[
+\text{crossterm}=1+\frac{a_ka_l}{N^2(u_k-u_l)^2}+O\left(N^{-3}\right)
+\]
+The summation over $2^m$ integrals leads to cancellation at parts involving 1.
+The next term $\to$ perfect matching.
+\end{proof}
+
+\subsection{Spectrum Separation}
+\todo
+
+\subsection{Replica Method}
+\todo

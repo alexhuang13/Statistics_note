@@ -1,2 +1,978 @@
 \newpage
-\section{Classic Statistics Model 1 -- Linear Regression, Bias-Variance Decomposition, LASSO, Feature Engineering}
+\section{Concentration Inequalities}
+We now turn to the high-dimensional setting, beginning with concentration inequalities. The section is organized as follows:
+\begin{enumerate}
+    \item Basic Concentration Inequalities
+    \item Random Vectors 
+    \item Random Matrices
+    \item Concentration of Lipschitz Functions
+    \item Gaussian Concentration
+\end{enumerate}
+
+This section mainly follows STAT210B (UC Berkeley, taught by Song Mei), High-dimensional probability (PKU, taught by Zhihua Zhang) and Introduction to Machine Learning (PKU, taught by Lei Wu), STAT300B (Stanford), CS839 (U Wisconsin–Madison). I also referred to the book High-dimensional probability: An introduction with applications in data science~\cite{vershynin2018high} and the book High-Dimensional Statistics: A Non-Asymptotic Viewpoint~\cite{wainwright2019high}.
+
+\subsection{Basic Concentration Inequalities}
+Suppose we have a random variable $X \sim \mathbb{P}_X$, sampled from the distribution $\mathbb{P}_X$. Let $\mu = \mathbb{E}_{X \sim \mathbb{P}_X}[X]$ be its expectation. In general, $|x - \mu|$ could be very large. However, in many scenarios (especially when $X$ takes a special form), $|x - \mu|$ is very small with high probability.
+
+\begin{lem}[Markov's Inequality]
+Let $X$ be a nonnegative random variable. Then for all $t > 0$,
+\[
+\mathbb{P}(X \geq t) \leq \frac{\mathbb{E}[X]}{t}.
+\]
+\end{lem}
+
+\begin{lem}[Chernoff's Inequality]
+For all $t > 0$, we have
+\[
+\mathbb{P}(X \geq \mu + t) \leq \inf_{\lambda} \frac{\mathbb{E}[e^{\lambda(X-\mu)}]}{e^{\lambda t}} = e^{-h(t)},
+\]
+where
+\[
+h(t) = \sup_{\lambda} \lambda t - \log \mathbb{E}[e^{\lambda(X-\mu)}].
+\]
+\end{lem}
+\begin{lem}[Union Bound]
+Suppose we have a collection of events $\{E_s\}_{s \in [d]}$. If $\mathbb{P}(E_s^c) \leq \frac{\delta}{d}$ for all $s$, then
+\[
+\mathbb{P}\!\left( \bigcup_{s \in [d]} E_s \right) \geq 1 - \delta.
+\]
+\end{lem}
+
+\subsubsection{Sub-Gaussians}
+Now we discuss an important type of random variables.
+\begin{defn}[Sub-Gaussian]
+A random variable with $\mu = \mathbb{E}[X]$ is \textbf{$\sigma$-sub-Gaussian} if there is a positive number $\sigma > 0$ such that
+\[
+\mathbb{E}[e^{\lambda(X-\mu)}] \leq e^{\lambda^2 \sigma^2 / 2} \qquad \forall \lambda \in \mathbb{R}.
+\]
+\end{defn}
+
+\begin{prop}[Hoeffding's Inequality]
+Suppose $X_i$, $i = 1, \ldots, n$ are independent, where $X_i$ has mean $\mu_i$ and is $\sigma_i$-sub-Gaussian. Then
+\begin{enumerate}
+    \item $\sum_{i=1}^n X_i$ has mean $\sum_{i=1}^n \mu_i$ and is sub-Gaussian with parameter $\sqrt{\sum_{i=1}^n \sigma_i^2}$.
+    \item 
+    \[
+    \mathbb{P}\!\left( \sum_{i=1}^n (X_i - \mu_i) \geq t \right) \leq \exp\!\left( -\frac{t^2}{2 \sum_{i=1}^n \sigma_i^2} \right).
+    \]
+\end{enumerate}
+\end{prop}
+\begin{exam}[Bounded random variable]
+Let $X \in P([a, b])$. We claim that $X$ is $(b-a)$-sub-Gaussian.
+\end{exam}
+
+\begin{proof}
+Instead of a direct calculation, we use a series of tricks.
+
+\textbf{Trick 1:} Let $X' \stackrel{d}{=} X$ with $X, X'$ independent. Then
+\[
+\mathbb{E}_X[e^{\lambda(X-\mu)}] = \mathbb{E}_X[e^{\lambda X - \mathbb{E}_X[X']}]
+\]
+\textbf{Trick 2:} Use Jensen's inequality to get $e^{-\lambda \mathbb{E}[X']} \leq \mathbb{E}[e^{-\lambda X'}]$. This gives
+\[
+\leq \mathbb{E}_{X, X'}\, \mathbb{E}[e^{\lambda(X - X')}]
+\]
+\textbf{Trick 3:} Introduce $\varepsilon \sim \mathrm{Unif}(\{\pm 1\})$ with $\varepsilon$ independent of $(X, X')$. Then $\varepsilon(X - X') \stackrel{d}{=} X - X'$.
+\[
+= \mathbb{E}_{\varepsilon, X, X'}\, \mathbb{E}[e^{\lambda \varepsilon (X - X')}]
+\]
+Using the tower property of conditional expectation,
+\[
+= \mathbb{E}_{X, X'}\!\left[ \mathbb{E}_\varepsilon[e^{\lambda \varepsilon (X - X')} \mid X, X'] \right]
+\]
+By the $1$-sub-Gaussianity of $\varepsilon$,
+\[
+\leq \mathbb{E}_{X, X'}[e^{\lambda^2 (X - X')^2 / 2}]
+\]
+Since $(X - X')^2 \leq (b - a)^2$ by the boundedness of $X, X'$,
+\[
+\leq e^{\lambda^2 (b - a)^2 / 2}. \qedhere
+\]
+\end{proof}
+\begin{rem}
+    Get $\frac{b-a}{2}$-sub-Gaussian using the following techniques.
+    Suppose $m \leq X \leq M$. We claim
+    \[
+    \psi_X(\lambda):= \log \EE e^{\lambda X} \leq \tfrac{1}{8} \lambda^2 (M-m)^2.
+    \]
+    
+    \begin{proof}
+    WLOG assume $\mathbb{E}[X] = 0$. Then $\psi_X(0) = 0$ and $\psi_X'(0) = \mathbb{E}[X] = 0$. The second derivative is
+    \[
+    \psi_X''(\lambda) = \mathrm{Var}_Q(X) \leq \tfrac{1}{4}(M-m)^2,
+    \]
+    where $Q$ is the tilted measure $dQ/dP \propto e^{\lambda X}$ (supported on $[m,M]$), and the bound is Popoviciu's inequality. By Taylor expansion at $\lambda = 0$,
+    \[
+    \psi_X(\lambda) = \tfrac{1}{2} \psi_X''(\xi) \lambda^2 \leq \tfrac{1}{8} \lambda^2 (M-m)^2. \qedhere
+    \]
+    \end{proof}
+\end{rem}
+
+\begin{thm}[Equivalent Conditions for Sub-Gaussians]
+Let $X$ be a random variable. Then the following are equivalent:
+\begin{enumerate}
+    \item[(i)] The tails of $X$ satisfy
+    \[
+    \mathbb{P}(|X| \geq t) \leq 2 \exp\!\left( -\frac{t^2}{\kappa_1^2} \right) \qquad \forall t \geq 0.
+    \]
+    
+    \item[(ii)] The moments of $X$ satisfy
+    \[
+    \|X\|_{L^p} = \left( \mathbb{E}[|X|^p] \right)^{1/p} \leq \kappa_2 \sqrt{p}, \qquad \forall p \geq 1.
+    \]
+    
+    \item[(iii)] The moment generating function of $X^2$ satisfies
+    \[
+    \mathbb{E}[\exp(\lambda^2 X^2)] \leq \exp(\kappa_3^2 \lambda^2) \qquad \forall \lambda \text{ such that } |\lambda| \leq \frac{1}{\kappa_3}.
+    \]
+    
+    \item[(iv)] The moment generating function of $X^2$ is bounded at some point:
+    \[
+    \mathbb{E}[\exp(X^2 / \kappa_4^2)] \leq 2.
+    \]
+\end{enumerate}
+
+Moreover, if $\mathbb{E}[X] = 0$, then properties (i)--(iv) are also equivalent to
+\begin{enumerate}
+    \item[(v)] The moment generating function of $X$ satisfies
+    \[
+    \mathbb{E}[\exp(\lambda X)] \leq \exp(\kappa_5^2 \lambda^2 / 2) \qquad \forall \lambda \in \mathbb{R}.
+    \]
+\end{enumerate}
+
+Here, $\kappa_1, \ldots, \kappa_5$ are universal constants.
+\end{thm}
+
+\subsubsection{Sub-Exponentials}
+Let $G \sim \mathcal{N}(0, 1)$. Then $G^2$ is not sub-Gaussian. This is because $\mathbb{E}[G^2] = 1$, and
+\begin{align*}
+\mathbb{E}[e^{\lambda(G^2 - 1)}] 
+&= \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{\infty} e^{\lambda(z^2 - 1)} e^{-z^2/2} \, dz \\
+&= \begin{cases} \dfrac{e^{-\lambda}}{\sqrt{1 - 2\lambda}} & \lambda < 1/2 \\ \infty & \lambda \geq 1/2. \end{cases}
+\end{align*}
+We can still derive a good but weaker tail bound for this kind of random variable.
+
+\begin{defn}
+A random variable $X$ is $(\nu, \alpha)$-\textbf{sub-exponential} if
+\[
+\mathbb{E}[e^{\lambda(X - \mu)}] \leq e^{\lambda^2 \nu^2 / 2} \qquad \forall |\lambda| \leq \frac{1}{\alpha}.
+\]
+\end{defn}
+
+We can see from this definition that sub-Gaussian variables are sub-exponential with any $\alpha > 0$.
+
+\begin{exam}
+If $G \sim \mathcal{N}(0, 1)$, then $G^2$ is $(2, 4)$-sub-exponential.
+\end{exam}
+
+\begin{proof}
+We want to show that
+\[
+\mathbb{E}[e^{\lambda(G^2 - 1)}] = \frac{e^{-\lambda}}{\sqrt{1 - 2\lambda}} \leq e^{2\lambda^2} \qquad \forall |\lambda| \leq \frac{1}{4}.
+\]
+We can do this by comparing Taylor series.
+\end{proof}
+
+\begin{prop}[Bernstein Condition]
+Suppose $X$ has mean $\mu$ and variance $\sigma^2$. Suppose that $\mathbb{E}[(X - \mu)^k] \leq \tfrac{1}{2} k! \, \sigma^2 b^{k-2}$ for all $k \geq 2$. Then $X$ is $(\sqrt{2}\sigma, 2b)$-sub-exponential.
+\end{prop}
+
+\begin{proof}
+We just need to show that the moment generating function is bounded. Do a Taylor expansion:
+\begin{align*}
+\mathbb{E}[e^{\lambda(X-\mu)}] 
+&= 1 + \frac{\lambda^2 \sigma^2}{2} + \sum_{k=3}^{\infty} \lambda^k \frac{\mathbb{E}[(X-\mu)^k]}{k!} \\
+&\leq 1 + \frac{\lambda^2 \sigma^2}{2} + \frac{\lambda^2 \sigma^2}{2} \sum_{k=3}^{\infty} (|\lambda| b)^{k-2}.
+\end{align*}
+This is a geometric series, so we can simplify it:
+\begin{align*}
+&\leq 1 + \frac{\lambda^2 \sigma^2 / 2}{1 - b|\lambda|} \\
+&\leq e^{(\lambda^2 \sigma^2 / 2) / (1 - b|\lambda|)}.
+\end{align*}
+When $|\lambda| \leq \tfrac{1}{2b}$,
+\[
+\leq e^{\lambda^2 (\sqrt{2}\sigma)^2 / 2}. \qedhere
+\]
+\end{proof}
+
+\begin{lem}[Bernstein's Inequality]
+Let $\{X_i\}_{i \in [n]}$ be independent with $\mathbb{E}[X_i] = \mu_i$ and $X_i$ $(\nu_i, \alpha_i)$-sub-exponential. Then $\sum_{i=1}^n (X_i - \mu_i)$ is sub-exponential with parameters $\nu_* = \sqrt{\sum_{i=1}^n \nu_i^2}$ and $\alpha_* = \max_i \alpha_i$. Moreover,
+\[
+\mathbb{P}\!\left( \frac{1}{n} \sum_{i=1}^n (X_i - \mu_i) \geq t \right) \leq 
+\begin{cases} 
+e^{-n t^2 / (2 \nu_*^2)} & t \leq \nu_*^2 / \alpha_* \\
+e^{-n t / (2 \alpha_*)} & t > \nu_*^2 / \alpha_*.
+\end{cases}
+\]
+\end{lem}
+
+\begin{thm}[Strong Bernstein's Inequality]
+Let $X_1, \ldots, X_n$ be independent, mean-zero, with $|X_i| \leq K$ for all $i$. Set $\sigma^2 = \sum_{i=1}^n \mathbb{E}[X_i^2]$. Then
+\[
+\mathbb{P}\!\left( \left| \sum_{i=1}^n X_i \right| \geq t \right) \leq 2 \exp\!\left( -\frac{t^2 / 2}{\sigma^2 + K t / 3} \right).
+\]
+\end{thm}
+
+\begin{rem}
+    How do we extract the order of $\frac{1}{n}\sum_{i=1}^n X_i - \mu$? Set $\delta = \exp\!\left(-n \min\!\left\{\frac{t^2}{2\nu^2}, \frac{t}{2b}\right\}\right)$, and solve for $t$ to get
+    \[
+    t = \max\!\left\{ \nu \sqrt{\frac{2 \log(1/\delta)}{n}}, \; b \cdot \frac{2 \log(1/\delta)}{n} \right\}.
+    \]
+    This tells us that
+    \[
+    \frac{1}{n} \sum_{i=1}^n X_i - \mu \leq \max\!\left\{ \nu \sqrt{\frac{2 \log(1/\delta)}{n}}, \; b \cdot \frac{2 \log(1/\delta)}{n} \right\} \qquad \text{with probability at least } 1 - \delta.
+    \]
+\end{rem}
+
+\begin{exam}
+    Let $Y = \sum_{i=1}^n Z_i^2$ with $Z_i \sim \mathcal{N}(0, 1)$. Then $Y \sim \chi^2(n)$. Last time, we showed that $Z_i^2$ is $\mathrm{sE}(2, 4)$, so $Y \sim \mathrm{sE}(2\sqrt{n}, 4)$. By Bernstein's inequality,
+\[
+\mathbb{P}\!\left( \left| \frac{1}{n} \sum_{i=1}^n Z_i^2 - 1 \right| \geq t \right) \leq 2 e^{-n t^2 / 8} \qquad \forall t \leq 1.
+\]
+
+Here is a problem: Suppose we have $\{u_1, u_2, \ldots, u_N\} \subseteq \mathbb{R}^d$ with a high dimension $d$. Can we find an $F : \mathbb{R}^d \to \mathbb{R}^m$ with some small $m$ such that the distances are preserved? That is, we want
+\[
+1 - \delta \leq \frac{\|F(u_i) - F(u_j)\|_2^2}{\|u_i - u_j\|_2^2} \leq 1 + \delta, \qquad \forall i, j \in [N].
+\]
+
+How small can we make $m$? The Johnson--Lindenstrauss lemma says that we can achieve this by random projection.
+
+\begin{lem}[Johnson--Lindenstrauss]
+Let $X \in \mathbb{R}^{m \times d}$ have entries $X_{i,j} \overset{\mathrm{iid}}{\sim} \mathcal{N}(0, 1)$, and let $F : \mathbb{R}^d \to \mathbb{R}^m$ be defined as $F(u) = \tfrac{1}{\sqrt{m}} X \cdot u$. Then for any fixed $\{u_1, \ldots, u_N\} \subseteq \mathbb{R}^d$, as long as $m \gtrsim \tfrac{1}{\varepsilon^2} \log\!\left(\tfrac{N}{\delta}\right)$, with probability $1 - \delta$ we have
+\[
+1 - \varepsilon \leq \frac{\|F(u_i) - F(u_j)\|_2^2}{\|u_i - u_j\|_2^2} \leq 1 + \varepsilon, \qquad \forall i, j \in [N].
+\]
+\end{lem}
+\begin{proof}
+Denote $Y_{i,j} = \frac{\|F(u_i) - F(u_j)\|_2^2}{\|u_i - u_j\|_2^2}$. We claim that $Y_{i,j} \sim \chi^2(m)/m$. Then Bernstein's inequality will give
+\[
+\mathbb{P}(|Y_{i,j} - 1| \geq t) \leq 2 e^{-m t^2 / 8} \qquad \forall t \leq 1.
+\]
+Using a union bound on all $N(N-1) \leq N^2$ pairs $i \neq j$, we get
+\[
+\mathbb{P}\!\left( \exists\, i, j \in [N] \text{ s.t.\ } |Y_{i,j} - 1| \geq t \right) \leq 2 N^2 e^{-m t^2 / 8} \qquad \forall t \leq 1.
+\]
+Setting the right-hand side equal to $\delta$, we can solve for $m$ to get
+\[
+m \geq \frac{8}{t^2} \log\!\left( \frac{2 N^2}{\delta} \right) = \frac{C}{t^2} \log\!\left( \frac{N}{\delta} \right).
+\]
+
+Now let's verify the claim that $Y_{i,j} = \frac{\|F(u_i) - F(u_j)\|_2^2}{\|u_i - u_j\|_2^2} \sim \chi^2(m)/m$. Note that
+\[
+\frac{1}{\sqrt{m}} X(u_i - u_j) \sim N\!\left( 0, \frac{\|u_i - u_j\|_2^2}{m} I_m \right),
+\]
+which implies that
+\[
+\frac{\|X(u_i - u_j)\|_2^2}{m} \sim \frac{\|u_i - u_j\|_2^2 \cdot \chi^2(m)}{m}.
+\]
+This proves the claim. \qedhere
+\end{proof}
+\end{exam}
+
+\begin{thm}[Equivalent Conditions for sub-Exponentials]
+The following statements are equivalent:
+\begin{enumerate}
+    \item[(a)] 
+    \[
+    \mathbb{P}(|X| \geq t) \leq 2 \exp(-t / \kappa_1), \qquad \forall t \geq 0.
+    \]
+    
+    \item[(b)] 
+    \[
+    \|X\|_{L^p} = \left( \mathbb{E}[|X|^p] \right)^{1/p} \leq \kappa_2 p, \qquad \forall p \geq 1.
+    \]
+    
+    \item[(c)] 
+    \[
+    \mathbb{E}[\exp(\lambda |X|)] \leq \exp(\kappa_3 \lambda) \qquad \forall \lambda \text{ s.t. } 0 \leq \lambda \leq \frac{1}{\kappa_3}.
+    \]
+    
+    \item[(d)] 
+    \[
+    \mathbb{E}[\exp(|X| / \kappa_4)] \leq 2.
+    \]
+\end{enumerate}
+
+Moreover, if $\mathbb{E}[X] = 0$, then (a)--(d) are equivalent to
+\begin{enumerate}
+    \item[(e)] 
+    \[
+    \mathbb{E}[\exp(\lambda X)] \leq \exp(\lambda^2 \kappa_5^2 / 2) \qquad \forall |\lambda| \leq \frac{1}{\kappa_5}.
+    \]
+\end{enumerate}
+
+Here, $\kappa_1, \ldots, \kappa_5$ are universal constants.
+\end{thm}
+
+\begin{exam}
+Let $X_1 \sim \mathrm{sG}(\sigma_1)$ and $X_2 \sim \mathrm{sG}(\sigma_2)$ be not necessarily independent with $\mathbb{E}[X_1] = \mathbb{E}[X_2] = 0$. We claim that $X_1 X_2 \sim \mathrm{sE}(K \sigma_1 \sigma_2, K \sigma_1 \sigma_2)$ for some universal $K$.
+\end{exam}
+
+\begin{lem}[Bennett's Inequality]
+Let $(X_i)_{i \in [n]}$ be independent, where $X_i - \mathbb{E}[X_i] \leq b$ a.s., and $\nu_i^2 := \mathrm{Var}(X_i)$ for all $i \in [n]$. Then
+\[
+\mathbb{P}\!\left( \sum_{i=1}^n (X_i - \mathbb{E}[X_i]) \geq t \right) \leq \exp\!\left( -\frac{\sum_{i=1}^n \nu_i^2}{b^2} \, h\!\left( \frac{b t}{\sum_{i=1}^n \nu_i^2} \right) \right),
+\]
+where $h(u) = (1 + u) \log(1 + u) - u$.
+\end{lem}
+
+\subsubsection{Maximal Inequality}
+\begin{lem}
+Let $(X_i)_{i \in [n]}$ be a sequence of random variables. For any convex, strictly increasing $\psi : \mathbb{R} \to \mathbb{R}_{\geq 0}$, we have
+\begin{align*}
+&\mathbb{E}\!\left[ \max_{i \in [n]} X_i \right] \leq \psi^{-1}\!\left( \sum_{i=1}^n \mathbb{E}[\psi(X_i)] \right), \\
+&\mathbb{P}\!\left( \max_{i \in [n]} X_i \geq t \right) \leq \sum_{i=1}^n \frac{\mathbb{E}[\psi(X_i)]}{\psi(t)}.
+\end{align*}
+\end{lem}
+
+\begin{proof}
+\begin{align*}
+\mathbb{E}\!\left[ \max_{i \in [n]} X_i \right] 
+&= \mathbb{E}\!\left[ \psi^{-1}\!\left( \max_{i \in [n]} \psi(X_i) \right) \right] && \text{($\psi$ strictly increasing)} \\
+&\leq \psi^{-1}\!\left( \mathbb{E}\!\left[ \max_{i \in [n]} \psi(X_i) \right] \right) && \text{(Jensen, $\psi^{-1}$ concave)} \\
+&\leq \psi^{-1}\!\left( \sum_{i=1}^n \mathbb{E}[\psi(X_i)] \right) && \text{(max $\leq$ sum)}. \qedhere
+\end{align*}
+\end{proof}
+
+\begin{exam}
+For $X_i \sim \mathrm{sG}(\sigma)$, take $\psi(u) = e^{\lambda u}$. Optimizing over $\lambda$, we get
+\[
+\mathbb{E}\!\left[ \max_{i \in [n]} X_i \right] \leq \sigma \sqrt{2 \log n}.
+\]
+\end{exam}
+
+This gives an important intuition: $n$ sub-Gaussian random variables have maximum of order $\sqrt{\log n}$.
+
+\begin{rem}[Lower Bound on the Gaussian Maximum]
+The bound $\mathbb{E}[\max_{i \in [n]} X_i] \leq \sigma \sqrt{2 \log n}$ is tight: for $X_i \overset{\mathrm{iid}}{\sim} \mathcal{N}(0, 1)$, one also has $\mathbb{E}[\max_{i \in [n]} X_i] \gtrsim \sqrt{\log n}$. The argument is short. Let $A = \{\exists \, i : X_i \geq c\sqrt{\log n}\}$; then
+\[
+\mathbb{E}\!\left[\max_i X_i\right] \geq c\sqrt{\log n} \cdot \mathbb{P}(A) - \mathbb{E}[X_1^-] \cdot \mathbb{P}(A^c),
+\]
+where $\mathbb{E}[X_1^-] = 1/\sqrt{2\pi}$ is an absolute constant, so it suffices to show $\mathbb{P}(A) \geq \tfrac{1}{2}$. By independence and $1 - x \leq e^{-x}$,
+\[
+\mathbb{P}(A) \geq 1 - \exp\!\left(-n \cdot \mathbb{P}(X_1 \geq c\sqrt{\log n})\right),
+\]
+and the Gaussian lower tail bound $\mathbb{P}(X_1 \geq r) \gtrsim \frac{1}{r} e^{-r^2/2}$ gives $\mathbb{P}(X_1 \geq c\sqrt{\log n}) \gtrsim 1/(n^{c^2/2}\sqrt{\log n}) \geq 1/(2n)$ for any $c < \sqrt{2}$. So the $\sqrt{\log n}$ rate is unavoidable, not an artifact of the proof.
+\end{rem}
+
+\subsection{Random Vectors}
+
+\subsubsection{Random Vectors}
+\begin{thm}[Concentration of the Norm]
+\label{thm:concentration-norm}
+Let $X = (X_1, \ldots, X_n) \in \mathbb{R}^n$ be a random vector with independent, sub-Gaussian coordinates $X_i$ that satisfy $\mathbb{E} X_i^2 = 1$. Then
+\[
+\big\| \|X\|_2 - \sqrt{n} \big\|_{\psi_2} \leq C K^2,
+\]
+where $K = \max_i \|X_i\|_{\psi_2}$ and $C$ is an absolute constant.
+\end{thm}
+
+\begin{proof}
+For simplicity, we assume that $K \geq 1$. We shall apply Bernstein's deviation inequality for the normalized sum of independent, mean-zero random variables
+\[
+\frac{1}{n} \|X\|_2^2 - 1 = \frac{1}{n} \sum_{i=1}^n (X_i^2 - 1).
+\]
+Since the random variable $X_i$ is sub-Gaussian, $X_i^2 - 1$ is sub-exponential, and more precisely
+\begin{align*}
+\|X_i^2 - 1\|_{\psi_1} 
+&\leq C \|X_i^2\|_{\psi_1}  \\
+&= C \|X_i\|_{\psi_2}^2 \\
+&\leq C K^2.
+\end{align*}
+
+Applying Bernstein's inequality, we obtain for any $u \geq 0$ that
+\[
+\mathbb{P}\!\left\{ \left| \frac{1}{n} \|X\|_2^2 - 1 \right| \geq u \right\} \leq 2 \exp\!\left( -\frac{c n}{K^4} \min(u^2, u) \right). \tag{3.1}
+\]
+(Here we used that $K^4 \geq K^2$ since we assumed that $K \geq 1$.)
+
+This is a good concentration inequality for $\|X\|_2^2$, from which we are going to deduce a concentration inequality for $\|X\|_2$. To make the link, we can use the following elementary observation that is valid for all numbers $z \geq 0$:
+\[
+|z - 1| \geq \delta \;\implies\; |z^2 - 1| \geq \max(\delta, \delta^2). \tag{3.2}
+\]
+We obtain for any $\delta \geq 0$ that
+\begin{align*}
+\mathbb{P}\!\left\{ \left| \tfrac{1}{\sqrt{n}} \|X\|_2 - 1 \right| \geq \delta \right\} 
+&\leq \mathbb{P}\!\left\{ \left| \tfrac{1}{n} \|X\|_2^2 - 1 \right| \geq \max(\delta, \delta^2) \right\} \\
+&\leq 2 \exp\!\left( -\frac{c n}{K^4} \cdot \delta^2 \right) .
+\end{align*}
+Changing variables to $t = \delta \sqrt{n}$, we obtain the desired sub-Gaussian tail
+\[
+\mathbb{P}\!\left\{ \big| \|X\|_2 - \sqrt{n} \big| \geq t \right\} \leq 2 \exp\!\left( -\frac{c t^2}{K^4} \right) \quad \text{for all } t \geq 0. \tag{3.3}
+\]
+This is equivalent to the conclusion of the theorem. \qedhere
+\end{proof}
+
+\begin{rem}[Deviation]
+Theorem~\ref{thm:concentration-norm} states that with high probability, $X$ takes values very close to the sphere of radius $\sqrt{n}$. In particular, with high probability (say, $0.99$), $X$ even stays within \emph{constant distance} from that sphere.
+\end{rem}
+
+\begin{defn}[Isotropic Random Vectors]
+A random vector $X$ in $\mathbb{R}^n$ is called \emph{isotropic} if
+\[
+\Sigma(X) = \mathbb{E}\, X X^\top = I_n,
+\]
+where $I_n$ denotes the identity matrix in $\mathbb{R}^n$.
+\end{defn}
+
+\begin{lem}[Isotropic Random Vectors]
+\label{lem: inner_prod}
+Let $X$ be an isotropic random vector in $\mathbb{R}^n$. Then
+\[
+\mathbb{E}\, \|X\|_2^2 = n.
+\]
+Moreover, if $X$ and $Y$ are two independent isotropic random vectors in $\mathbb{R}^n$, then
+\[
+\mathbb{E}\, \langle X, Y \rangle^2 = n.
+\]
+\end{lem}
+
+
+\begin{rem}[Almost Orthogonality of Independent Vectors]
+Let us normalize the random vectors $X$ and $Y$ in Lemma~\ref{lem: inner_prod}, setting
+\[
+\overline{X} := \frac{X}{\|X\|_2} \quad \text{and} \quad \overline{Y} := \frac{Y}{\|Y\|_2}.
+\]
+Lemma~\ref{lem: inner_prod} is basically telling us that $\|X\|_2 \asymp \sqrt{n}$, $\|Y\|_2 \asymp \sqrt{n}$, and $\langle X, Y \rangle \asymp \sqrt{n}$ with high probability, which implies that
+\[
+|\langle \overline{X}, \overline{Y} \rangle| \asymp \frac{1}{\sqrt{n}}.
+\]
+Thus, in high-dimensional spaces independent and isotropic random vectors tend to be \emph{almost orthogonal}.
+\end{rem}
+
+\begin{defn}[Sub-Gaussian Random Vectors]
+A random vector $X$ in $\mathbb{R}^n$ is called \emph{sub-Gaussian} if the one-dimensional marginals $\langle X, x \rangle$ are sub-Gaussian random variables for all $x \in \mathbb{R}^n$. The \emph{sub-Gaussian norm} of $X$ is defined as
+\[
+\|X\|_{\psi_2} = \sup_{x \in S^{n-1}} \|\langle X, x \rangle\|_{\psi_2}.
+\]
+\end{defn}
+
+A good example of a sub-Gaussian random vector is a random vector with independent, sub-Gaussian coordinates:
+
+\begin{lem}[Sub-Gaussian Distributions with Independent Coordinates]
+Let $X = (X_1, \ldots, X_n) \in \mathbb{R}^n$ be a random vector with independent, mean-zero, sub-Gaussian coordinates $X_i$. Then $X$ is a sub-Gaussian random vector, and
+\[
+\|X\|_{\psi_2} \leq C \max_{i \leq n} \|X_i\|_{\psi_2}.
+\]
+\end{lem}
+
+\begin{thm}[Uniform Distribution on the Sphere is Sub-Gaussian]
+Let $X$ be a random vector uniformly distributed on the Euclidean sphere in $\mathbb{R}^n$ with center at the origin and radius $\sqrt{n}$:
+\[
+X \sim \mathrm{Unif}\!\left(\sqrt{n}\, S^{n-1}\right).
+\]
+Then $X$ is sub-Gaussian, and
+\[
+\|X\|_{\psi_2} \leq C.
+\]
+\end{thm}
+
+\subsubsection{Grothendieck’s Inequality}
+\begin{thm}[Grothendieck's Inequality]
+Consider an $m \times n$ matrix $(a_{ij})$ of real numbers. Assume that, for any numbers $x_i, y_j \in \{-1, 1\}$, we have
+\[
+\left| \sum_{i, j} a_{ij} x_i y_j \right| \leq 1.
+\]
+Then, for any Hilbert space $H$ and any vectors $u_i, v_j \in H$ satisfying $\|u_i\| = \|v_j\| = 1$, we have
+\[
+\left| \sum_{i, j} a_{ij} \langle u_i, v_j \rangle \right| \leq K,
+\]
+where $K \leq 1.783$ is an absolute constant.
+\end{thm}
+
+\begin{proof}
+Let $K = \frac{\pi}{\log(1 + \sqrt{2})}$.
+We first prove that there exists a Hilbert space $H$ and maps $\Psi, \Phi : S(\mathbb{R}^n) \to S(H)$ such that for all $u, v \in \mathbb{R}^n$:
+\[
+\langle u, v \rangle = \frac{2K}{\pi} \arcsin \langle \Psi(u), \Phi(v) \rangle.
+\]
+\textit{Proof.} We first describe tensor inner products: for $T = u^{\otimes 3} \in \mathbb{R}^{n \times n \times n}$ defined by $T_{ijl} = u_i u_j u_l$, we have $\langle T, S \rangle = \sum_{ijl} T_{ijl} S_{ijl}$. By Taylor expansion,
+\begin{align*}
+\arcsin(\langle u, v \rangle) &= \langle u, v \rangle + \frac{1}{3!} \langle u, v \rangle^3 + \frac{3}{5!} \langle u, v \rangle^5 + \cdots \\
+&= \langle u, v \rangle + \frac{1}{3!} \langle u^{\otimes 3}, v^{\otimes 3} \rangle + \frac{3}{5!} \langle u^{\otimes 5}, v^{\otimes 5} \rangle + \cdots \\
+&= \left\langle 
+\begin{bmatrix} u \\ \sqrt{\frac{1}{3!}}\, u^{\otimes 3} \\ \sqrt{\frac{3}{5!}}\, u^{\otimes 5} \\ \vdots \end{bmatrix},
+\begin{bmatrix} v \\ \sqrt{\frac{1}{3!}}\, v^{\otimes 3} \\ \sqrt{\frac{3}{5!}}\, v^{\otimes 5} \\ \vdots \end{bmatrix}
+\right\rangle.
+\end{align*}
+We define
+\[
+\Psi(u) = \begin{bmatrix} u \\ \sqrt{\frac{1}{3!}}\, u^{\otimes 3} \\ \sqrt{\frac{3}{5!}}\, u^{\otimes 5} \\ \vdots \end{bmatrix}, \qquad
+\Phi(v) = \begin{bmatrix} v \\ \sqrt{\frac{1}{3!}}\, v^{\otimes 3} \\ \sqrt{\frac{3}{5!}}\, v^{\otimes 5} \\ \vdots \end{bmatrix},
+\]
+which proves the claim. Next we prove the original inequality:
+\begin{align*}
+\sum_{i,j} B_{ij} \langle u_i, v_j \rangle 
+&= K \sum_{i,j} B_{ij} \cdot \frac{2}{\pi} \arcsin \langle \Psi(u_i), \Phi(v_j) \rangle \\
+&= K \sum_{i,j} B_{ij}\, \mathbb{E}_{w \sim \text{Gaussian}}\!\left[ \mathrm{sign}\langle w, \Phi(u_i) \rangle \cdot \mathrm{sign}\langle w, \Psi(v_j) \rangle \right] \\
+&\leq K \max_{x_i, y_j \in \{\pm 1\}} \left| \sum_{i,j} B_{ij} x_i y_j \right|.
+\end{align*}
+This completes the proof. \qedhere
+\end{proof}
+
+\begin{thm}
+Consider an $n \times n$ symmetric, positive-semidefinite matrix $A$. Let $\mathrm{INT}(A)$ denote the maximum in the integer optimization problem
+\[
+\mathrm{INT}(A) = \max\!\left\{ \sum_{i,j=1}^n A_{ij} x_i x_j \;:\; x_i = \pm 1 \text{ for } i = 1, \ldots, n \right\},
+\]
+and $\mathrm{SDP}(A)$ denote the maximum in the semidefinite program
+\[
+\mathrm{SDP}(A) = \max\!\left\{ \sum_{i,j=1}^n A_{ij} \langle X_i, X_j \rangle \;:\; \|X_i\|_2 = 1 \text{ for } i = 1, \ldots, n \right\}.
+\]
+Then
+\[
+\mathrm{INT}(A) \leq \mathrm{SDP}(A) \leq 2K \cdot \mathrm{INT}(A),
+\]
+where $K \leq 1.783$ is the constant in Grothendieck's inequality.
+\end{thm}
+
+\subsection{Random Matrices}
+
+\subsubsection{Covering Number}
+\begin{defn}[$\varepsilon$-net]
+Let $(T, d)$ be a metric space. Consider a subset $K \subset T$ and let $\varepsilon > 0$. A subset $N \subseteq K$ is called an \emph{$\varepsilon$-net of $K$} if every point in $K$ is within distance $\varepsilon$ of some point of $N$, i.e.
+\[
+\forall x \in K \;\; \exists\, x_0 \in N : \; d(x, x_0) \leq \varepsilon.
+\]
+Equivalently, $N$ is an $\varepsilon$-net of $K$ if and only if $K$ can be covered by balls with centers in $N$ and radii $\varepsilon$.
+\end{defn}
+
+\begin{defn}[Covering Numbers]
+The smallest possible cardinality of an $\varepsilon$-net of $K$ is called the \emph{covering number} of $K$ and is denoted $N(K, d, \varepsilon)$. Equivalently, $N(K, d, \varepsilon)$ is the smallest number of closed balls with centers in $K$ and radii $\varepsilon$ whose union covers $K$.
+\end{defn}
+
+\begin{defn}[Packing Numbers]
+A subset $N$ of a metric space $(T, d)$ is \emph{$\varepsilon$-separated} if $d(x, y) > \varepsilon$ for all distinct points $x, y \in N$. The largest possible cardinality of an $\varepsilon$-separated subset of a given set $K \subset T$ is called the \emph{packing number} of $K$ and is denoted $P(K, d, \varepsilon)$.
+\end{defn}
+
+\begin{lem}[Equivalence of Covering and Packing Numbers]
+For any set $K \subset T$ and any $\varepsilon > 0$, we have
+\[
+P(K, d, 2\varepsilon) \leq N(K, d, \varepsilon) \leq P(K, d, \varepsilon).
+\]
+\end{lem}
+
+\begin{rem}[Entropy Numbers]
+    The corresponding entropy numbers are the logarithms of the covering and packing numbers, respectively. (Discuss in next section).
+\end{rem}
+
+\subsubsection{Sub-Gaussian Matrices}
+\begin{thm}[Norm of matrices with sub-Gaussian entries]
+Let $A$ be an $m \times n$ random matrix whose entries $A_{ij}$ are independent, mean zero, sub-Gaussian random variables. Then, for any $t > 0$ we have
+\[
+\|A\| \leq C K (\sqrt{m} + \sqrt{n} + t)
+\]
+with probability at least $1 - 2 \exp(-t^2)$. Here $K = \max_{i,j} \|A_{ij}\|_{\psi_2}$.
+\end{thm}
+
+\begin{proof}
+This proof is an example of an $\varepsilon$-net argument. We need to control $\langle Ax, y \rangle$ for all vectors $x$ and $y$ on the unit sphere. To this end, we will discretize the sphere using a net (approximation step), establish a tight control of $\langle Ax, y \rangle$ for fixed vectors $x$ and $y$ from the net (concentration step), and finish by taking a union bound over all $x$ and $y$ in the net.
+\\\textbf{Step 1: Approximation.} Choose $\varepsilon = 1/4$. We can find an $\varepsilon$-net $N$ of the sphere $S^{n-1}$ and an $\varepsilon$-net $M$ of the sphere $S^{m-1}$ with cardinalities
+\[
+|N| \leq 9^n \quad \text{and} \quad |M| \leq 9^m.
+\]
+The operator norm of $A$ can be bounded using these nets as follows:
+\[
+\|A\| \leq 2 \max_{x \in N, \, y \in M} \langle Ax, y \rangle.
+\]
+\textbf{Step 2: Concentration.} Fix $x \in N$ and $y \in M$. Then the quadratic form
+\[
+\langle Ax, y \rangle = \sum_{i=1}^n \sum_{j=1}^m A_{ij} x_i y_j
+\]
+is a sum of independent, sub-Gaussian random variables. The sum is sub-Gaussian, and
+\begin{align*}
+\|\langle Ax, y \rangle\|_{\psi_2}^2 
+&\leq C \sum_{i=1}^n \sum_{j=1}^m \|A_{ij} x_i y_j\|_{\psi_2}^2 
+\leq C K^2 \sum_{i=1}^n \sum_{j=1}^m x_i^2 y_j^2 \\
+&= C K^2 \!\left( \sum_{i=1}^n x_i^2 \right) \!\left( \sum_{j=1}^m y_j^2 \right) 
+= C K^2.
+\end{align*}
+We can restate this as the tail bound
+\[
+\mathbb{P}\{\langle Ax, y \rangle \geq u\} \leq 2 \exp(-c u^2 / K^2), \qquad u \geq 0.
+\]
+\textbf{Step 3: Union bound.} Next, we unfix $x$ and $y$ using a union bound. Suppose the event $\max_{x \in N, y \in M} \langle Ax, y \rangle \geq u$ occurs. Then there exist $x \in N$ and $y \in M$ such that $\langle Ax, y \rangle \geq u$. Thus the union bound yields
+\[
+\mathbb{P}\!\left\{ \max_{x \in N, \, y \in M} \langle Ax, y \rangle \geq u \right\} \leq \sum_{x \in N, \, y \in M} \mathbb{P}\{\langle Ax, y \rangle \geq u\}.
+\]
+Using the tail bound and the size estimates on $N$ and $M$, we bound the probability above by
+\[
+9^{n + m} \cdot 2 \exp(-c u^2 / K^2).
+\]
+Choose
+\[
+u = C K (\sqrt{n} + \sqrt{m} + t).
+\]
+Then $u^2 \geq C^2 K^2 (n + m + t^2)$, and if the constant $C$ is chosen sufficiently large, the exponent is large enough, say $c u^2 / K^2 \geq 3(n + m) + t^2$. Thus
+\[
+\mathbb{P}\!\left\{ \max_{x \in N, \, y \in M} \langle Ax, y \rangle \geq u \right\} \leq 9^{n+m} \cdot 2 \exp(-3(n+m) - t^2) \leq 2 \exp(-t^2).
+\]
+Finally, combining this with the bound from Step 1, we conclude that
+\[
+\mathbb{P}\{\|A\| \geq 2u\} \leq 2 \exp(-t^2).
+\]
+Recalling our choice of $u$, we complete the proof.
+\end{proof}
+
+Now we are going to prove sharper and two-sided bounds on the entire spectrum of $A$ 
+and relax the independence of entries to just independence of rows.
+
+\begin{lem}[Approximate Isometries]
+\label{lem:isometry}
+Let $A$ be an $m \times n$ matrix and $\delta > 0$. Suppose that
+\[
+\|A^\top A - I_n\| \leq \max(\delta, \delta^2).
+\]
+Then
+\[
+(1 - \delta) \|x\|_2 \leq \|Ax\|_2 \leq (1 + \delta) \|x\|_2 \qquad \text{for all } x \in \mathbb{R}^n.
+\]
+Consequently, all singular values of $A$ are between $1 - \delta$ and $1 + \delta$:
+\[
+1 - \delta \leq s_n(A) \leq s_1(A) \leq 1 + \delta.
+\]
+\end{lem}
+
+\begin{thm}[Two-sided bound on sub-Gaussian matrices]
+Let $A$ be an $m \times n$ matrix whose rows $A_i$ are independent, mean zero, sub-Gaussian isotropic random vectors in $\mathbb{R}^n$. Then for any $t \geq 0$ we have
+\[
+\sqrt{m} - C K^2 (\sqrt{n} + t) \leq s_n(A) \leq s_1(A) \leq \sqrt{m} + C K^2 (\sqrt{n} + t)
+\]
+with probability at least $1 - 2 \exp(-t^2)$. Here $K = \max_i \|A_i\|_{\psi_2}$.
+\end{thm}
+
+We will prove a slightly stronger conclusion, namely that
+\[
+\left\| \frac{1}{m} A^\top A - I_n \right\| \leq K^2 \max(\delta, \delta^2) \quad \text{where} \quad \delta = C\!\left( \sqrt{\frac{n}{m}} + \frac{t}{\sqrt{m}} \right).
+\]
+Using the approximate-isometry lemma~\ref{lem:isometry}, one can quickly check that this implies the singular value bounds.
+
+\begin{proof}
+We will prove the stronger conclusion using an $\varepsilon$-net argument. This will be similar to the proof for sub-Gaussian matrices, but we now use Bernstein's concentration inequality instead of Hoeffding's.
+\\\textbf{Step 1: Approximation.} We can find a $\tfrac{1}{4}$-net $N$ of the unit sphere $S^{n-1}$ with cardinality $|N| \leq 9^n$. The operator norm can be evaluated on $N$:
+\[
+\left\| \frac{1}{m} A^\top A - I_n \right\| \leq 2 \max_{x \in N} \left| \left\langle \!\left( \frac{1}{m} A^\top A - I_n \right) x, x \right\rangle \right| = 2 \max_{x \in N} \left| \frac{1}{m} \|Ax\|_2^2 - 1 \right|.
+\]
+To complete the proof it suffices to show that, with the required probability,
+\[
+\max_{x \in N} \left| \frac{1}{m} \|Ax\|_2^2 - 1 \right| \leq \frac{\varepsilon}{2} \quad \text{where} \quad \varepsilon := K^2 \max(\delta, \delta^2).
+\]
+\textbf{Step 2: Concentration.} Fix $x \in S^{n-1}$ and express $\|Ax\|_2^2$ as a sum of independent random variables:
+\[
+\|Ax\|_2^2 = \sum_{i=1}^m \langle A_i, x \rangle^2 =: \sum_{i=1}^m X_i^2,
+\]
+where $A_i$ denote the rows of $A$. By assumption, $A_i$ are independent, isotropic, and sub-Gaussian random vectors with $\|A_i\|_{\psi_2} \leq K$. Thus $X_i = \langle A_i, x \rangle$ are independent sub-Gaussian random variables with $\mathbb{E} X_i^2 = 1$ and $\|X_i\|_{\psi_2} \leq K$. Therefore $X_i^2 - 1$ are independent, mean-zero, sub-exponential random variables with
+\[
+\|X_i^2 - 1\|_{\psi_1} \leq C K^2.
+\]
+Thus we can use Bernstein's inequality and obtain
+\begin{align*}
+\mathbb{P}\!\left\{ \left| \frac{1}{m} \|Ax\|_2^2 - 1 \right| \geq \frac{\varepsilon}{2} \right\} 
+&= \mathbb{P}\!\left\{ \left| \frac{1}{m} \sum_{i=1}^m X_i^2 - 1 \right| \geq \frac{\varepsilon}{2} \right\} \\
+&\leq 2 \exp\!\left[ -c_1 \min\!\left( \frac{\varepsilon^2}{K^4}, \frac{\varepsilon}{K^2} \right) m \right] \\
+&= 2 \exp\!\left[ -c_1 \delta^2 m \right] && \text{(since $\varepsilon / K^2 = \max(\delta, \delta^2)$)} \\
+&\leq 2 \exp\!\left[ -c_1 C^2 (n + t^2) \right].
+\end{align*}
+The last bound follows from the definition of $\delta$ and the inequality $(a + b)^2 \geq a^2 + b^2$ for $a, b \geq 0$.
+\\\textbf{Step 3: Union bound.} Now we can unfix $x \in N$ using a union bound. Recalling that $N$ has cardinality bounded by $9^n$, we obtain
+\[
+\mathbb{P}\!\left\{ \max_{x \in N} \left| \frac{1}{m} \|Ax\|_2^2 - 1 \right| \geq \frac{\varepsilon}{2} \right\} \leq 9^n \cdot 2 \exp\!\left[ -c_1 C^2 (n + t^2) \right] \leq 2 \exp(-t^2)
+\]
+if we chose the absolute constant $C$ large enough. As we noted in Step 1, this completes the proof.
+\end{proof}
+
+\begin{thm}[Matrix Bernstein's Inequality]
+Let $X_1, \ldots, X_n \in \mathbb{R}^{d \times d}$ be $n$ independent symmetric random matrices satisfying, for all $1 \leq i \leq n$, $\mathbb{E}(X_i) = 0$, $\|X_i\|_{op} \leq b$, and 
+\[
+\max_i \|\mathbb{E}(\sum_i X_i X_i^T)\|_{op} \|\mathbb{E}(\sum_i X_i^T X_i)\|_{op} \leq \sigma^2
+\]. Then we have:
+\[
+P\left(\left\|\sum_i X_i\right\|_{op} \geq t\right) \leq 2d \exp\left(\frac{-t^2/2}{\sigma^2 + bt/3}\right)
+\]
+\end{thm}
+
+\begin{proof}
+We directly apply Lieb's theorem: $f(A) = \mathrm{tr}(\exp(H + \log A))$ is a convex function on the space of matrices of the same size as $A$. By Jensen's inequality:
+\[
+\mathbb{E}\left[\mathrm{tr}\left(\exp\left(\sum_{i=1}^n \theta X_i\right)\right)\right] \leq \mathrm{tr}\left(\exp\left(\sum_{i=1}^n \log \mathbb{E} e^{\theta X_i}\right)\right)
+\]
+Using a Markov-like relaxation technique, we obtain the following concentration inequality for the largest eigenvalue:
+\begin{equation}
+\label{eq:14}
+P(\lambda_{\max}(Y) \geq t) \leq \inf_{\theta \geq 0} \mathrm{tr}\left(\exp\left(\sum_{i=1}^n \log \mathbb{E} e^{\theta X_i}\right)\right) e^{-\theta t}
+\end{equation}
+We next estimate the log moment generating function $\mathbb{E} e^{\theta X_i}$. From the condition $\|X_i\|_{op} \leq b$, we have:
+\[
+e^{\theta X} = 1 + \theta X + X^T f(X) X \preceq 1 + \theta X + f(b) X^2
+\]
+where:
+\[
+f(b) = \frac{e^{\theta b} - 1 - b}{b^2} = \sum_{k=2}^{\infty} \frac{(\theta b)^{k-2}}{3^{k-2}} \cdot \frac{\theta^2}{2} \leq \frac{\frac{\theta^2}{2}}{1 - \frac{\theta b}{3}}
+\]
+Therefore:
+\begin{equation}
+\label{eq:17}
+    \log \mathbb{E} e^{\theta X} \leq \frac{\frac{\theta^2}{2}}{1 - \frac{\theta b}{3}} \mathbb{E} X^2
+\end{equation}
+Finally, combining (\ref{eq:14}), (\ref{eq:17}) and the conditions:
+\[
+P(\lambda_{\max}(Y) \geq t) \leq \inf_{\theta \geq 0} \mathrm{tr}\left(\exp\left(\frac{\frac{\theta^2}{2}}{1 - \frac{\theta b}{3}} \sum_{i=1}^n \mathbb{E} X_i^2\right)\right) e^{-\theta t}
+\]
+\[
+\leq \inf_{0 \leq \theta < \frac{3}{b}} d \exp\left(\frac{\frac{\theta^2}{2}}{1 - \frac{\theta b}{3}} \sigma^2\right) e^{-\theta t}
+\]
+\[
+\leq d \exp\left(\frac{-t^2/2}{\sigma^2 + bt/3}\right) \quad \left(\text{choosing } \theta = \frac{t}{\sigma^2 + \frac{bt}{3}}\right)
+\]
+Therefore:
+\[
+P\left(\left\|\sum_i X_i\right\|_{op} \geq t\right) \leq 2d \exp\left(\frac{-t^2/2}{\sigma^2 + bt/3}\right)
+\]
+\end{proof}
+
+
+
+
+
+\subsubsection{Application: Community Detection in Networks}
+We consider a graph $G$ containing $n$ nodes, and we partition the node set $A$ into $k$ classes of equal size. Intuitively, if we can find such a clustering, the probability of an edge between two nodes in the same class should be relatively high, while the probability of an edge between two nodes in different classes should be relatively low. Based on this intuition, we give the following definition of the adjacency matrix $A$ of the graph:
+\begin{equation*}
+A_{i,j} \sim 
+\begin{cases}
+\text{Bernoulli}(p), & \text{if } i,j \text{ are in the same class} \\
+\text{Bernoulli}(q), & \text{if } i,j \text{ are in different classes}
+\end{cases}
+\end{equation*}
+where $p > q$. We assume that the observed graph is generated according to this probabilistic rule, and we hope to determine, conditional on this graph, the adjacency matrix $A^*$ of the clustered graph:
+\begin{equation*}
+A^*_{i,j} = 
+\begin{cases}
+1, & \text{if } i,j \text{ are in the same class} \\
+0, & \text{if } i,j \text{ are in different classes}
+\end{cases}
+\end{equation*}
+Note that $A - \frac{p+q}{2}$ has positive expectation on within-class edges and negative expectation on between-class edges. Therefore, we can consider the following optimization formulation:
+\begin{equation*}
+\arg\max_{Y \in \mathbb{R}^{n \times n}} \left\langle A - \frac{p+q}{2}, Y \right\rangle = \sum_{i,j} \left( A_{i,j} - \frac{p+q}{2} \right) Y_{i,j}
+\end{equation*}
+\begin{align*}
+\text{s.t.} \quad & Y_{i,j} \in \{0,1\} \\
+& Y_{ii} = 1 \\
+& \sum_{i,j} Y_{ij} = \frac{n}{k} \\
+& \text{rank}(Y) = k
+\end{align*}
+Clearly this problem is non-convex and discontinuous, making it difficult to optimize. We consider relaxing the problem into the following convex semidefinite programming problem:
+\begin{equation*}
+\hat{A} = \arg\max_{Y \in \mathbb{R}^{n \times n}} \left\langle A - \frac{p+q}{2}, Y \right\rangle = \sum_{i,j} \left( A_{i,j} - \frac{p+q}{2} \right) Y_{i,j}
+\end{equation*}
+\begin{align*}
+\text{s.t.} \quad & Y_{i,j} \in [0,1] \\
+& Y_{ii} = 1 \\
+& Y \succeq 0
+\end{align*}
+
+\begin{thm}[Community Detection]
+\label{thm:sbm}
+If $p \geq \frac{1}{n}$, then with probability $\geq 1 - 2\left(\frac{2}{e}\right)^n$:
+\begin{equation*}
+\label{eq:30}
+\frac{1}{n^2}\|\hat{A} - A\|_1 \lesssim \sqrt{\frac{p}{(p-q)^2 n}}
+\end{equation*}
+\end{thm}
+
+\begin{rem}
+We observe that the larger the gap between $p$ and $q$, the smaller the error. Moreover, only when $\frac{(p-q)^2}{p} \lesssim \frac{1}{n}$, i.e., $p \lesssim \frac{1}{n}$, the right-hand side is $\gtrsim 1$ and the conclusion becomes trivial. This means that as long as $p \gtrsim \frac{1}{n}$ — that is, our graph can be sparse — the conclusion still holds. This answers why the title of the paper is ``Community Detection in Sparse Networks''. In fact, as long as the network has enough nodes, we can recover the community structure from a sparse graph!
+\end{rem}
+
+\begin{proof}
+Since $\hat{A}$ is the optimal solution of the semidefinite program, plugging it into (8) we have:
+\begin{equation}
+\label{eq:31}
+\left\langle A - \frac{p+q}{2}, \hat{A} \right\rangle \geq \left\langle A - \frac{p+q}{2}, A^* \right\rangle
+\end{equation}
+\begin{equation}
+\label{eq:32}
+\implies 0 \geq \left\langle A - \frac{p+q}{2}, A^* - \hat{A} \right\rangle \geq \langle A - \mathbb{E}A, A^* - \hat{A} \rangle + \left\langle \mathbb{E}A - \frac{p+q}{2}, A^* - \hat{A} \right\rangle
+\end{equation}
+We estimate the two terms separately:
+\begin{equation}
+\label{eq:33}
+\left\langle \mathbb{E}A - \frac{p+q}{2}, A^* - \hat{A} \right\rangle \leq \frac{p-q}{2} \sum_{i,j} |A^*_{i,j} - \hat{A}_{i,j}| = \frac{p-q}{2} \|A^* - \hat{A}\|_1
+\end{equation}
+Combining \eqref{eq:31}, \eqref{eq:32} and applying Grothendieck’s Inequality:
+\begin{align}
+\frac{p-q}{2} \|A^* - \hat{A}\|_1 &\leq \langle A - \mathbb{E}A, \hat{A} - A^* \rangle \label{eq:34} \\
+&\leq |\langle A - \mathbb{E}A, \hat{A} \rangle| + |\langle A - \mathbb{E}A, A^* \rangle| \label{eq:35} \\
+&\leq 2 \max_{Y_{ii}=1,\, Y \succeq 0} |\langle A - \mathbb{E}A, Y \rangle| \label{eq:36} \\
+&\leq 2K \max_{x, y \in \{\pm 1\}^n} \left| \sum_{i,j} (A_{ij} - \mathbb{E}A_{ij}) x_i y_j \right| \label{eq:37}
+\end{align}
+Looking at \eqref{eq:36}, this is a sum of $n^2$ independent random variables. We treat it as $n^2$ matrices of size $1 \times 1$ and apply Lemma 1. Let $Z_{ij} = (A_{ij} - \mathbb{E}A_{ij}) x_i y_j$, $Z = \sum_{i,j} Z_{ij}$, $\|Z_{ij}\|_{op} = |Z_{ij}| \leq 1$, $\mathrm{var}(Z_{ij}) \leq p(1-p) \leq p$:
+\begin{equation*}
+\label{eq:38}
+P(|Z| \geq t) \leq 2 \exp\left(-\frac{t^2}{pn^2 + t/3}\right) \leq 2 \exp\left(-\frac{ct^2}{pn^2 + t}\right)
+\end{equation*}
+Taking a union bound over all $i, j$, we obtain:
+\begin{equation*}
+\label{eq:39}
+P\left( \max_{(x,y) \in \{\pm 1\}^n \times \{\pm 1\}^n} \left| \sum_{i,j} (A_{ij} - \mathbb{E}A_{ij}) x_i y_j \right| \geq t \right) \leq 2 \exp\left(-\frac{ct^2}{pn^2 + t}\right) 4^n
+\end{equation*}
+We choose $t$ sufficiently large: $t = c(\sqrt{pn^3} + n)$, so that the right-hand side is $\geq (2e)^{-n}$ for a sufficiently large constant $c$. Therefore, with probability $\geq 1 - (2e)^{-n}$:
+\begin{equation*}
+\label{eq:40}
+\max_{(x,y) \in \{\pm 1\}^n \times \{\pm 1\}^n} \left| \sum_{i,j} (A_{ij} - \mathbb{E}A_{ij}) x_i y_j \right| \lesssim \sqrt{pn^3} + n \lesssim \sqrt{pn^3}
+\end{equation*}
+Combining \eqref{eq:33}, \eqref{eq:37} and applying the lemma:
+\begin{equation*}
+\label{eq:41}
+\frac{p-q}{2} \|A^* - \hat{A}\|_1 \lesssim \sqrt{pn^3}
+\end{equation*}
+That is:
+\begin{equation*}
+\label{eq:42}
+\frac{1}{n^2} \|A^* - \hat{A}\|_1 \lesssim \sqrt{\frac{p}{(p-q)^2 n}}
+\end{equation*}
+\end{proof}
+
+\begin{rem}
+This upper bound can be optimized to $e^{-\Omega((p-q)^2 n / p)}$.
+\end{rem}
+
+By Theorem~\ref{thm:sbm}, we know that the solution obtained from the convex-relaxed semidefinite program is close to the true solution with high probability. One may also wonder how to determine the true clustering result from $\hat{Y}$. We consider the case $k = 2$: without loss of generality, set $Y^* = \begin{pmatrix} \mathbf{1} & 0 \\ 0 & \mathbf{1} \end{pmatrix}$, let $u^*$ be the top singular vector of $Y^* - 1/2$, $u^* = \left( \sqrt{\tfrac{1}{n}}, \ldots, \sqrt{\tfrac{1}{n}}, -\sqrt{\tfrac{1}{n}}, \ldots, -\sqrt{\tfrac{1}{n}} \right)$. Let $\hat{u}$ be the top singular vector of $\hat{Y} - 1/2$; the indices of positive and negative components of $\hat{u}$ form the two classes, giving the clustering result. This is guaranteed by the following theorem:
+
+\begin{thm}
+If $\frac{1}{n} \|A^* - \hat{A}\|_1 \leq \frac{1}{20}$, then:
+\begin{equation*}
+\frac{1}{n} \min_{\alpha \in \{\pm 1\}} \#\{i : \mathrm{sgn}(\hat{u}_i) \neq \alpha \cdot \mathrm{sgn}(u^*_i)\} \lesssim \frac{1}{n^2} \|A^* - \hat{A}\|
+\end{equation*}
+\end{thm}
+
+\subsection{Concentration of Lipschitz Functions}
+
+\begin{thm}[Gaussian Concentration]
+Let $X_1, X_2, \ldots, X_n \overset{\mathrm{iid}}{\sim} \mathcal{N}(0, 1)$ and $f : \mathbb{R}^n \to \mathbb{R}$ such that $f$ is $L$-\textbf{Lipschitz} in $\|\cdot\|_2$, i.e.
+\[
+|f(x) - f(y)| \leq L \|x - y\|_2 \qquad \forall x, y \in \mathbb{R}^n.
+\]
+Then
+\begin{enumerate}
+    \item $f(X_{1:n}) - \mathbb{E}[f(X_{1:n})]$ is $\mathrm{sG}(L)$.
+    \item 
+    \[
+    \mathbb{P}(|f(X_{1:n}) - \mathbb{E}[f(X_{1:n})]| \geq t) \leq 2 \exp\!\left( -\frac{t^2}{2 L^2} \right).
+    \]
+\end{enumerate}
+\end{thm}
+
+\begin{thm}[Concentration of Convex Lipschitz Functions]
+Suppose that
+\begin{enumerate}
+    \item $f$ is $L$-Lipschitz and convex:
+    \[
+    \nabla^2 f(x) \succ 0 \quad \text{if } \nabla^2 f \text{ exists}
+    \]
+    \item $(X_i)_{i \in [n]}$ independent with $X_i \in [a, b]$ a.s.
+\end{enumerate}
+Then $f(X_{1:n}) - \mathbb{E}[f]$ is $\mathrm{sG}(L(b-a))$, so
+\[
+\mathbb{P}(|f(X_{1:n}) - \mathbb{E}[f(X_{1:n})]| \geq t) \leq 2 \exp\left( -\frac{t^2}{2L^2(b-a)^2} \right).
+\]
+\end{thm}
+
+\subsection{Martingale Concentration Inequalities}
+\subsubsection{Martingale Concentration}
+Now we discuss martingale case. Recall that 
+$\{D_k\}_{k \geq 1}$ is a martingale difference sequence if $\{\sum_{k=1}^n D_k\}_{n \geq 1}$ is a martingale with respect to $\{\mathcal{F}_k\}_{k \geq 1}$.
+
+\begin{thm}[Martingale Concentration Inequality]
+Let $\{(D_k, \mathcal{F}_k)\}$ be a martingale difference sequence. If
+\[
+\mathbb{E}[e^{\lambda D_k} \mid \mathcal{F}_{k-1}] \leq e^{\lambda^2 \nu_k^2 / 2} \quad \text{a.s. } \forall \lambda \leq \frac{1}{\alpha_k},
+\]
+then
+\begin{enumerate}
+    \item $\sum_{k=1}^n D_k$ is $\mathrm{sE}\left(\sqrt{\sum_{k=1}^n \nu_k^2}, \max_{k \leq n} \alpha_k\right)$.
+    \item 
+    \[
+    \mathbb{P}\left( \left| \sum_{k=1}^n D_k \right| \geq t \right) \leq 2 \exp\left( -\min\left\{ \frac{t^2}{2 \sum_{k=1}^n \nu_k^2}, \frac{t}{2\alpha_*} \right\} \right)
+    \]
+\end{enumerate}
+\end{thm}
+
+\begin{cor}[Azuma-Hoeffding Inequality]
+Let $\{(D_k, \mathcal{F}_k)\}$ be a martingale difference sequence. Suppose there exists $\{(a_k, b_k)\}_{k=1}^n$ such that $D_k \in (a_k, b_k)$ a.s., where $b_k, a_k$ are $\mathcal{F}_{k-1}$-measurable and $|b_k - a_k| \leq L_k$. Then
+\begin{enumerate}
+    \item $\sum_{k=1}^n D_k$ is $\mathrm{sG}\left(\sqrt{\sum_{k=1}^n L_k^2}/2\right)$.
+    \item 
+    \[
+    \mathbb{P}\left( \left| \sum_{k=1}^n D_k \right| \geq t \right) \leq 2 \exp\left( -\frac{2t^2}{\sum_{k=1}^n (b_k - a_k)^2} \right).
+    \]
+\end{enumerate}
+\end{cor}
+
+\begin{defn}
+$f(x_1, \ldots, x_n)$ is a \textbf{bounded difference function} if for all $k \in [n]$, $x_{1:n}, x'_k$,
+\[
+|f(x_{1:k-1}, x_k, x_{k+1:n}) - f(x_{1:k-1}, x'_k, x_{k+1:n})| \leq L_k.
+\]
+\end{defn}
+
+This is a condition on how much the function changes if we change 1 coordinate. Here is a corollary of the Azuma-Hoeffding inequality.
+
+\begin{cor}[McDiarmid’s Inequality]
+\label{cor:McDiarmid}
+Suppose that $f : \mathbb{R}^n \to \mathbb{R}$ is $L_{1:n}$ bounded and $X_{1:n}$ has independent components. Then for all $t \geq 0$,
+\[
+\mathbb{P}(|f(X_{1:n}) - \mathbb{E}[f(X_{1:n})]| \geq t) \leq 2 \exp\left( -\frac{2t^2}{\sum_{k=1}^n L_k^2} \right).
+\]
+\end{cor}
+
+\subsubsection{Gaussian Complexity}
+Gaussian complexity is a very important notion in compressed sensing. Suppose we have a set $A \subseteq \mathbb{R}^n$. How do we measure its ``size''? A reasonable size function $S$ should at least satisfy $S(A) \leq S(B)$ if $A \subseteq B$. Here are some reasonable size functions:
+\begin{enumerate}
+    \item Euclidean width: $D(A) = \max_{a \in A} \|a\|_2$.
+    \item Dimension: A line has dimension 1, and a plane has dimension 2.
+\end{enumerate}
+
+\begin{defn}
+Given a set $A$, let $W = (W_1, \ldots, W_n)^\top \in \mathbb{R}^n$ with $W_i \overset{\text{iid}}{\sim} \mathcal{N}(0,1)$. The \textbf{Gaussian complexity} or ``\textbf{statistical dimension}'' of $A$ is
+\[
+\mathcal{G}(A) := \mathbb{E}_{W \sim N(0, I_n)} \left[ \sup_{a \in A} \langle a, W \rangle \right].
+\]
+\end{defn}
+
+Note that if we don't take the supremum in the expectation, the quantity would be 0. This quantity is always nonnegative.
+
+\begin{exam}
+Let $B_p(r) = \{x \in \mathbb{R}^n : \|x\|_p \leq r\}$. Then
+\[
+\mathcal{G}(B_p(r)) = \mathbb{E}\left[ \sup_{\|x\|_p \leq r} \langle x, W \rangle \right].
+\]
+If $q$ is the conjugate exponent of $p$, so $\frac{1}{p} + \frac{1}{q} = 1$, this is the variational representation of the $\|\cdot\|_q$ norm:
+\[
+r \, \mathbb{E}[\|W\|_q] \approx r n^{1/q}.
+\]
+\end{exam}
+
+Note that if $p_1 \leq p_2$, then $q_1 \geq q_2$, so $\mathcal{G}(B_{p_1}(r)) \leq \mathcal{G}(B_{p_2}(r))$.
+
+We want to show that $f(W) := \sup_{a \in A} \langle a, W \rangle$ concentrates. Fix $w, w' \in \mathbb{R}^n$. Then
+\[
+f(w) - f(w') = \sup_{a \in A} \langle a, w \rangle - \sup_{a \in A} \langle a, w' \rangle.
+\]
+Denote $a^* = \arg\max_a \langle a, w \rangle$:
+\begin{align*}
+f(w) - f(w') &= \langle a^*, w \rangle - \sup_{a \in A} \langle a, w' \rangle \\
+&= \inf_{a \in A} \langle a^*, w \rangle - \langle a, w' \rangle \\
+&\leq \langle a^*, w - w' \rangle \\
+&\leq \|a_*\| \|w - w'\|_2 \\
+&\leq D(A) \|w - w'\|_2.
+\end{align*}
+The other side can be proven similarly, so $f$ is $D(A)$-Lipschitz. Concentration says that $f(W)$ is $\mathrm{sG}(D(A))$.
+
+\begin{exam}
+If we let $A = B_2(r)$, then
+\[
+\mathbb{E}[f(W)] = \mathcal{G}(B_2(r)) = r\sqrt{n},
+\]
+since $D(A) = r$.
+\end{exam}

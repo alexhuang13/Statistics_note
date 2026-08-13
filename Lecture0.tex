@@ -1,7 +1,6 @@
 \newpage
 \section{Probability Theory and Stochastic Processes}
-\subsection{Overview}
-In this chapter, we introduce the basic notation and fundamental tools of probability theory and measure theory that will be used throughout the subsequent chapters. The chapter is organized as follows: 
+In this chapter, we introduce the basic notation and fundamental tools of probability theory and measure theory that will be used throughout the subsequent chapters. The section is organized as follows: 
 \begin{enumerate}
     \item probability space and random variables;
     \item modes of convergence;
@@ -9,9 +8,7 @@ In this chapter, we introduce the basic notation and fundamental tools of probab
     \item martingales, Markov chains and Brownian motion. 
 \end{enumerate}
 
-This chapter mainly follows Introduction to Probability Theory (Tsinghua University), Stochastic Processes (Peking University), Stochastic Analysis (Peking University), Math C218A (UC Berkeley), Math C218B (UC Berkeley) and the book Probability: Theory and Examples by Rick Durrett~\cite{durrett2019probability}, Sinho Chewi's notes of MATH C218A, and Introduction to Stochastic Processes~\cite{lawler2018introduction}.
-
-I skipped many classical theories and picked the topics I find most interesting and added some historical background and intuitive examples along the way. To me, many fundamental theories matter not for their rigor, but because they shed light on other fields and shape the way we think. They are like \textbf{crystal seeds}: once you have one, all sorts of fascinating problems and ideas can grow out of it. So in this book, we care more about intuition and motivation — or better yet, \textbf{momentum} — because what matters most is not what a theory is, but what it can become.
+This section mainly follows Introduction to Probability Theory (Tsinghua University), Stochastic Processes (Peking University), Stochastic Analysis (Peking University), Math C218A (UC Berkeley), Math C218B (UC Berkeley) and the book Probability: Theory and Examples by Rick Durrett~\cite{durrett2019probability}, Sinho Chewi's notes of MATH C218A, and Introduction to Stochastic Processes~\cite{lawler2018introduction}.
 
 \subsection{Probability Space and Random Variables}
 \subsubsection{Probability space}
@@ -157,7 +154,7 @@ Now let's talk about Gaussians. The key thing to know is that Gaussians stay Gau
 \begin{prop}
    The following are equivalent:
     \begin{enumerate}
-        \item The random vector \( \xi = (\xi_1, \dots, \xi_d)^T \) follows a \( d \)-dimensional Gaussian distribution.
+        \item The random vector \( \xi = (\xi_1, \dots, \xi_d)^\top \) follows a \( d \)-dimensional Gaussian distribution.
         \item For any \( a_1, \dots, a_d \), the linear combination \( \sum_{k=1}^d a_k \xi_k \) follows a one-dimensional Gaussian distribution.
     \end{enumerate} 
 \end{prop}
@@ -800,7 +797,7 @@ Let
 \begin{equation}
 \mathrm{d}\xi_t = \mathbf{b}(\xi_t) \, \mathrm{d}t + \Sigma(\xi_t) \, \mathrm{d}\mathbf{B}_t
 \end{equation}
-and denote $\mathcal{L} = \frac{1}{2}\sum_{i,j=1}^{n} a_{ij} \frac{\partial^2}{\partial x_i \partial x_j} + \sum_{i=1}^{n} b_i(x) \frac{\partial}{\partial x_i}$, where $(a_{ij})_{i,j=1,\cdots,n} = \Sigma\Sigma^\mathrm{t}$. Let $f \in C_0^2(\mathbb{R}^n)$, $q(x) \in C(\mathbb{R}^n)$, and $q(x)$ be bounded below.
+and denote $\mathcal{L} = \frac{1}{2}\sum_{i,j=1}^{n} a_{ij} \frac{\partial^2}{\partial x_i \partial x_j} + \sum_{i=1}^{n} b_i(x) \frac{\partial}{\partial x_i}$, where $(a_{ij})_{i,j=1,\cdots,n} = \Sigma\Sigma^\top$. Let $f \in C_0^2(\mathbb{R}^n)$, $q(x) \in C(\mathbb{R}^n)$, and $q(x)$ be bounded below.
 \begin{enumerate}
     \item Let $v(t, x) = E\left(f(\xi_t) \exp\left(-\int_0^t q(\xi_s) \, \mathrm{d}s\right) \bigg| \xi_0 = x\right)$. Then
     \begin{equation*}

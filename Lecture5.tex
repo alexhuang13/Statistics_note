@@ -1,2 +1,990 @@
 \newpage
-\section{Classical Statistics Model 2 -- SVM, Random Forest, Kernel Method, Bagging, Boosting, Time Series}
+\section{Function Spaces}
+Data in the real world often takes the form $y=f(x)+\epsilon$, and a central question is to understand the function space in which $f$ lives. In this section, we examine several perspectives on function spaces. The section is organized as follows:
+
+\begin{enumerate}
+    \item Rademacher Complexity
+    \item Metric Entropy Method
+    \item Glivenko-Cantelli Theorem and Donsker Theorem
+    \item Information Theory
+\end{enumerate}
+
+This section mainly follows STAT210B (UC Berkeley, taught by Song Mei), High-dimensional probability (PKU, taught by Zhihua Zhang), Introduction to Machine Learning (PKU, taught by Lei Wu), STAT300B (Stanford), STAT364 (Yale). I also referred to the book High-Dimensional Statistics: A Non-Asymptotic Viewpoint~\cite{wainwright2019high}.
+
+\subsection{Rademacher Complexity}
+\subsubsection{Empirical Process Theory}
+Suppose $(X_i)_{i \in [n]} \overset{\text{iid}}{\sim} X \sim \mathbb{P}$, and suppose we have a \textbf{function class} $\mathcal{F} \subseteq \{f : \mathcal{X} \to \mathbb{R} : \mathbb{E}[|f(X)|] < \infty\}$.
+
+\begin{defn}[Empirical Process]
+The \textbf{empirical process} indexed by $\mathcal{F}$ is
+\[
+\left\{ \sqrt{n} \left( \frac{1}{n} \sum_{i=1}^n f(X_i) - \mathbb{E}[f(X)] \right) : f \in \mathcal{F} \right\}.
+\]
+\end{defn}
+
+Define
+\[
+\|\mathbb{P}_n - \mathbb{P}\|_{\mathcal{F}} := \sup_{f \in \mathcal{F}} \left| \frac{1}{n} \sum_{i=1}^n f(X_i) - \mathbb{E}[f(X)] \right|.
+\]
+Here, $\mathbb{P}_n = \frac{1}{n} \sum_{i=1}^n \delta_{X_i}$ is the \textbf{empirical measure}. This is the object we will study for the next portion of the course. If there is only one function $f$, we can deal with this using the law of large numbers and concentration inequalities. We will learn how to deal with this object using empirical process theory.
+
+Why do we care about the maximum of the empirical process in statistics and machine learning? Recall the following setup:
+\begin{center}
+\begin{tabular}{c|c}
+Data distribution & $(X_i)_{i \in [n]} \overset{\text{iid}}{\sim} \mathbb{P}$ \\
+\hline
+Loss function & $L : \mathcal{X} \times \Theta \to \mathbb{R}$ \\
+\hline
+Empirical risk & $\widehat{R}(\theta) = \frac{1}{n} \sum_{i=1}^n \ell(X_i; \theta)$ \\
+\hline
+Population risk & $R(\theta) = \mathbb{E}_{X \sim \mathbb{P}}[\ell(X; \theta)]$ \\
+\hline
+Empirical risk minimizer & $\hat{\theta} = \arg\min_\theta \widehat{R}(\theta)$ \\
+\hline
+Population risk minimizer & $\theta_* = \arg\min_\theta R(\theta)$ \\
+\hline
+Excess risk & $E = R(\hat{\theta}) - R(\theta_*)$ \\
+\end{tabular}
+\end{center}
+
+We train $\hat{\theta}$ on the empirical risk, so we want the empirical risk to be close to the population risk. So to make sure training on our training data is accurate, we want to make the excess risk small. The excess risk has the following decomposition:
+\[
+E = \underbrace{(R(\hat{\theta}) - \widehat{R}_n(\hat{\theta}))}_{\text{Gap}} + \underbrace{(\widehat{R}_n(\hat{\theta}) - \widehat{R}_n(\theta_*))}_{\leq 0} + \underbrace{(\widehat{R}_n(\theta_*) - R(\theta_*))}_{\text{bound using Hoeffding}}
+\]
+The Gap is
+\[
+\text{Gap} = \frac{1}{n} \sum_{i=1}^n \mathbb{E}[\ell(X; \hat{\theta}) - \ell(X_i; \hat{\theta})].
+\]
+We cannot use the strong law of large numbers to examine this because the $\ell(X_i; \hat{\theta})$ are not independent random variables. We can fix this by replacing $\hat{\theta}$ by the sup over $\theta$:
+\[
+\leq \sup_{\theta} \left| \frac{1}{n} \sum_{i=1}^n \mathbb{E}[\ell(X; \theta) - \ell(X_i; \theta)] \right|.
+\]
+Here, $f(X) = \ell(X; \theta)$, so we want to look at the function class $\mathcal{F} = \{\ell(\cdot; \theta) : \theta \in \Theta\}$.
+
+\begin{defn}[Glivenko-Cantelli Class]
+We say that $\mathcal{F}$ is a \textbf{Glivenko-Cantelli class} for $\mathbb{P}$ if
+\[
+\|\mathbb{P}_n - \mathbb{P}\|_{\mathcal{F}} := \sup_{f \in \mathcal{F}} \left| \frac{1}{n} \sum_{i=1}^n f(X_i) - \mathbb{E}[f(X)] \right| \xrightarrow{P} 0.
+\]
+\end{defn}
+
+\begin{exam}
+The Glivenko-Cantelli theorem says that $\mathcal{F}_1 = \{\mathbbm{1}_{\{x \leq t\}}\}_{t \in \mathbb{R}}$ is a Glivenko-Cantelli class for any $\mathbb{P} \in \mathcal{P}(\mathbb{R})$.
+\end{exam}
+
+\subsubsection{Rademacher Complexity Bounds}
+Recall that the Rademacher complexity of a set $A \subseteq \mathbb{R}^n$ is
+\[
+\mathcal{R}(A) := \mathbb{E}_{\varepsilon \overset{\text{iid}}{\sim} \text{Unif}(\{\pm 1\})} \left\{ \sup_{a \in A} \langle a, \varepsilon \rangle \right\}
+\]
+
+\begin{defn}[Rademacher Complexity]
+Given a function class $\mathcal{F}$ and a fixed data set $(x_i)_{i \in [n]} \subseteq \mathcal{X}$, let
+\[
+\mathcal{F}(x_{1:n}) := \{(f(x_1), \ldots, f(x_n)) : f \in \mathcal{F}\} \subseteq \mathbb{R}^n.
+\]
+The \textbf{Rademacher complexity} of the function class $\mathcal{F}$ and the data set $(x_i)_{i \in [n]}$ is
+\[
+\mathcal{R}(\mathcal{F}(x_{1:n})/n) := \mathbb{E}_{\varepsilon \overset{\text{iid}}{\sim} \text{Unif}(\{\pm 1\})} \left\{ \sup_{f \in \mathcal{F}} \left| \frac{1}{n} \sum_{i=1}^n \varepsilon_i f(X_i) \right| \right\}.
+\]
+\end{defn}
+
+If we write $\mathcal{A} = \pm \mathcal{F}(x_{1:n})/n$, then we can relate Rademacher complexity of sets and function classes by
+\[
+\widetilde{\mathcal{R}}(A) = \mathcal{R}(\mathcal{F}(x_{1:n})/n),
+\]
+where $\widetilde{\mathcal{R}}$ denotes the Rademacher complexity of a set.
+
+\begin{defn}[Rademacher Complexity]
+Given a function class $\mathcal{F}$ and a distribution $\mathbb{P} \in \mathcal{P}(\mathcal{X})$, let $(X_i)_{i \in [n]} \overset{\text{iid}}{\sim} \mathbb{P}$. The \textbf{Rademacher complexity} of the function class $\mathcal{F}$ is
+\[
+\mathcal{R}(\mathcal{F}) := \mathbb{E}_{X_i \overset{\text{iid}}{\sim} \mathbb{P}}[\mathcal{R}(\mathcal{F}(X_{1:n})/n)].
+\]
+\end{defn}
+
+First, observe that if $\mathcal{F}_1 \subseteq \mathcal{F}_2$, then $\mathcal{R}_n(\mathcal{F}_1) \leq \mathcal{R}_n(\mathcal{F}_2)$, so this is a measure of the size of a function class.
+
+\begin{exam}
+Let $\psi : \mathbb{R}^d \to \mathbb{R}^p$ be a fixed feature map, and consider the function class
+\[
+\mathcal{F} = \{f(x) = \langle \psi(x), \theta \rangle : \|\theta\|_2 \leq B\}.
+\]
+Then the Rademacher complexity of this function class is
+\begin{align*}
+\mathcal{R}_n(\mathcal{F}) &= \mathbb{E}_{X_i, \varepsilon_i} \left[ \sup_{\|\theta\|_2 \leq B} \left| \frac{1}{n} \sum_{i=1}^n \varepsilon_i \langle \psi(X_i), \theta \rangle \right| \right] \\
+&= \mathbb{E}_{X_i, \varepsilon_i} \left[ \sup_{\|\theta\|_2 \leq B} \left| \varepsilon_i \left\langle \frac{1}{n} \sum_{i=1}^n \psi(X_i), \theta \right\rangle \right| \right] \\
+&= \mathbb{E}_{X_i, \varepsilon_i} \left[ \left\| \frac{1}{n} \sum_{i=1}^n \varepsilon_i \psi(X_i) \right\|_2 \right] \cdot B
+\end{align*}
+Using Cauchy-Schwarz,
+\begin{align*}
+&\leq \mathbb{E}_{X_i, \varepsilon_i} \left[ \left\| \frac{1}{n} \sum_{i=1}^n \varepsilon_i \psi(X_i) \right\|_2^2 \right]^{1/2} \cdot B \\
+&= \mathbb{E}_{X_i, \varepsilon_i} \left[ \frac{1}{n^2} \sum_{i=1}^n \varepsilon_i^2 \|\psi(X_i)\|_2^2 \right]^{1/2} \cdot B \\
+&= \frac{B}{\sqrt{n}} \mathbb{E}[\|\psi(X)\|_2^2]^{1/2}.
+\end{align*}
+\end{exam}
+
+\begin{rem}Why introduce Rademacher complexity?
+\begin{enumerate}
+    \item We will show that
+    \[
+    \|\mathbb{P}_n - \mathbb{P}\|_{\mathcal{F}} \approx \mathcal{R}_n(\mathcal{F}).
+    \]
+    \item The Rademacher complexity is easier to upper bound. We will have tools to upper bound it, such as
+    \begin{itemize}
+        \item VC dimension,
+        \item Metric entropy methods.
+    \end{itemize}
+\end{enumerate}
+\end{rem}
+
+
+\begin{prop}[Rademacher Complexity Bounds]
+For any function class $\mathcal{F}$ and distribution $\mathbb{P}$,
+\[
+\mathbb{E}[\|\mathbb{P}_n - \mathbb{P}\|_{\mathcal{F}}] \leq 2\mathcal{R}_n(\mathcal{F}).
+\]
+\end{prop}
+
+\begin{proof}
+Let $Y_i \overset{\text{iid}}{\sim} X_i$ be independent of $X_i$. Then
+\begin{align*}
+\mathbb{E}[\|\mathbb{P}_n - \mathbb{P}\|_{\mathcal{F}}] &= \mathbb{E} \left[ \sup_{f \in \mathcal{F}} \left| \frac{1}{n} \sum_{i=1}^n f(X_i) - \mathbb{E}[f(X_i)] \right| \right] \\
+&= \mathbb{E}_{X_{1:n}} \left[ \sup_{f \in \mathcal{F}} \left| \frac{1}{n} \sum_{i=1}^n f(X_i) - \mathbb{E}_{Y_{1:n}}[f(Y_i)] \right| \right] \\
+&\leq \mathbb{E}_{X_{1:n}, Y_{1:n}} \left[ \sup_{f \in \mathcal{F}} \left| \frac{1}{n} \sum_{i=1}^n (f(X_i) - f(Y_i)) \right| \right]
+\end{align*}
+We can introduce a Rademacher random variable without changing the distribution.
+\begin{align*}
+&= \mathbb{E}_{X_{1:n}, Y_{1:n}, \varepsilon_{1:n}} \left[ \sup_{f \in \mathcal{F}} \left| \frac{1}{n} \sum_{i=1}^n \varepsilon_i (f(X_i) - f(Y_i)) \right| \right] \\
+&\leq \mathbb{E}_{X_{1:n}, Y_{1:n}, \varepsilon_{1:n}} \left[ \sup_{f \in \mathcal{F}} \left| \frac{1}{n} \sum_{i=1}^n \varepsilon_i f(X_i) \right| - \left| \frac{1}{n} \sum_{i=1}^n \varepsilon_i f(Y_i) \right| \right] \\
+&\leq 2\mathcal{R}_n(\mathcal{F}).
+\end{align*}
+\end{proof}
+Define
+\[
+\|\mathbb{S}_n\|_{\mathcal{F}} = \sup_{f \in \mathcal{F}} \left| \frac{1}{n} \sum_{i=1}^n \varepsilon_i f(X_i) \right|.
+\]
+Here is an upgraded version.
+
+\begin{prop}
+For every convex, nondecreasing function $\Phi : \mathbb{R} \to \mathbb{R}$,
+\[
+\mathbb{E}_{X, \varepsilon}\left[\Phi\left(\tfrac{1}{2} \|\mathbb{S}_n\|_{\overline{\mathcal{F}}}\right)\right] \leq \mathbb{E}_X[\Phi(\|\mathbb{P}_n - \mathbb{P}\|_{\mathcal{F}})] \leq \mathbb{E}_{X, \varepsilon}[\Phi(2\|\mathbb{S}_n\|_{\mathcal{F}})],
+\]
+where $\overline{\mathcal{F}} = \{f - \mathbb{E}[f] : f \in \mathcal{F}\}$.
+\end{prop}
+
+\begin{rem}
+Making $\Phi(t) = t$ retrieves the bound on $\|\mathbb{P}_n - \mathbb{P}\|_{\mathcal{F}}$ in terms of Rademacher complexity. We can also take the upper bound to also be $\overline{\mathcal{F}}$ because $\mathbb{E}[\|\mathbb{P}_n - \mathbb{P}\|_{\mathcal{F}}] = \mathbb{E}[\|\mathbb{P}_n - \mathbb{P}\|_{\overline{\mathcal{F}}}]$.
+\end{rem}
+
+Suppose that for all $f \in \mathcal{F}$, $\|f\|_\infty \leq b$. Then $\|\mathbb{P}_n - \mathbb{P}\|_{\mathcal{F}}$ is $(2b/n, \ldots, 2b/n)$-bounded difference. The bounded difference inequality then gives that $\|\mathbb{P}_n - \mathbb{P}\|_{\mathcal{F}}$ is $\mathrm{sG}(b/\sqrt{n})$. In other words,
+\[
+\big| \|\mathbb{P}_n - \mathbb{P}\|_{\mathcal{F}} - \mathbb{E}[\|\mathbb{P}_n - \mathbb{P}\|_{\mathcal{F}}] \big| \leq b \sqrt{\frac{\log(2/\delta)}{n}} \quad \text{with probability } 1 - \delta.
+\]
+
+How do we upper bound the Rademacher complexity? Let's take a higher level picture and try to bound $\mathbb{E}[\sup_{\theta \in \Theta} X_\theta]$. In many cases, $X_\theta$ is sub-Gaussian for each fixed $\theta$.
+
+The simplest case is when $\Theta$ is finite. In this case, we have a \textbf{maximal inequality}: If for all $\theta \in \Theta$, $X_\theta \in \mathrm{sG}(\sigma)$, then
+\[
+\mathbb{E}\left[ \max_{\theta \in \Theta} X_\theta \right] \leq \sigma \sqrt{2 \log |\Theta|}.
+\]
+However, typically, this set $\Theta$ is infinite, so the maximal inequality cannot handle this case.
+
+
+\subsubsection{VC Dimension}
+\begin{defn}[VC Dimension]
+Suppose $\mathcal{F} \subseteq \{F : \mathcal{X} \to \{0, 1\}\}$ is binary valued. We say that $x_{1:n}$ is \textbf{shattered} by $\mathcal{F}$ if $|\mathcal{F}(x_{1:n})| = 2^n$. The \textbf{VC dimension}, $\nu(\mathcal{F})$, is the largest $n$ such that there exists $x_{1:n}$ shattered by $\mathcal{F}$.
+\end{defn}
+
+Note that $|\mathcal{F}(X_{1:n})| \leq 2^n$ always. So we want $\mathcal{F}$ to be able to distinguish between points in a maximal sense.
+
+\begin{prop}[Vapnik-Chervonenkis, Sauer-Shelah]
+For $\mathcal{F}$ with VC dimension $\nu$,
+\[
+\sup_{x_{1:n}} |\mathcal{F}(x_{1:n})| \leq \sum_{i=1}^{\nu} \binom{n}{i} \leq \min\left\{ (n+1)^\nu, \left(\frac{ne}{\nu}\right)^\nu \right\}.
+\]
+\end{prop}
+By this proposition, we immediately have
+\[
+\mathcal{R}_n(\mathcal{F}) \leq D \sqrt{\frac{\nu \log(n+1)}{n}}.
+\]
+
+\begin{exam}
+Let $\phi_1, \ldots, \phi_p : \mathcal{X} \to \mathbb{R}$ be linear (which you can think of as feature maps), and consider $\mathcal{F} = \{\mathbbm{1}_{\{\sum_{i=1}^p a_i \phi_i(x) \leq b\}} : a_i, b \in \mathbb{R}\}$. Then $\nu(\mathcal{F}) \leq p + 1$. If $\mathcal{F} = \{\mathbbm{1}_{\{\sum_{i=1}^p a_i \phi_i(x) \leq b\}} : a_i, b \in \mathbb{R}\}$ and $(X_i)_{i \in [n]} \overset{\text{iid}}{\sim} \mathbb{P}$, then
+\[
+\sup_{f \in \mathcal{F}} \left| \frac{1}{n} \sum_{i=1}^n f(X_i) - \mathbb{E}[f(X)] \right| \lesssim \sqrt{\frac{(p+1) \log n}{n}}.
+\]
+This $\log n$ factor can be eliminated later by the chaining method.
+\end{exam}
+
+\subsection{Metric Entropy Method}
+\subsubsection{Entropies of Function Classes}
+We want to understand the $\varepsilon$-covering number for $T \subseteq \mathbb{R}^d$. The intuition is that
+\[
+\log N(\varepsilon; T, \rho) \asymp \log \frac{\mathrm{Vol}(T)}{\mathrm{Vol}(B_\rho(\varepsilon))},
+\]
+\begin{lem}[Volume Bounds]
+\[
+\frac{\mathrm{Vol}(T)}{\mathrm{Vol}(B_\rho(\varepsilon))} \leq N(\varepsilon; T, \rho) \leq M(\varepsilon; T, \rho) \leq \frac{\mathrm{Vol}(T + B_\rho(\varepsilon/2))}{\mathrm{Vol}(B_\rho(\varepsilon/2))},
+\]
+where $T + B_\rho(\varepsilon/2) = \{a + b : a \in T, b \in B_\rho(\varepsilon/2)\}$.
+\end{lem}
+
+Now we discuss a more complicated example.
+\begin{defn}[H\"older Space]
+Let $\mathcal{X}\subset\mathbb{R}^d$ be bounded. For $\alpha>0$ let $\underline{\alpha}$ be the
+greatest integer strictly smaller than $\alpha$. Define
+\[
+\|f\|_\alpha = \max_{0\le k_\cdot\le\underline\alpha}\sup_x |D^k f(x)|
++ \max_{k_\cdot=\underline\alpha}\sup_{x\ne y}
+\frac{|D^k f(x)-D^k f(y)|}{\|x-y\|^{\alpha-\underline\alpha}}.
+\]
+The H\"older space $C^\alpha(\mathcal{X})$ consists of continuous
+$f:\overline{\mathcal{X}}\to\mathbb{R}$
+with $\|f\|_\alpha<\infty$; its unit ball is $C^\alpha(\mathcal{X})_1=\{f:\|f\|_\alpha\le 1\}$.
+\end{defn}
+
+\begin{thm}[H\"older Space Entropy Bounds]
+Let $\mathcal{X}\subset\mathbb{R}^d$ be bounded, convex with nonempty interior. There exists a
+constant $K$ depending only on $\alpha$ and $d$ such that
+\[
+\log N\bigl(\varepsilon, C^\alpha(\mathcal{X})_1, \|\cdot\|_\infty\bigr)
+\le K\,\lambda(\mathcal{X}^1)\,\bigl(1/\varepsilon\bigr)^{d/\alpha}.
+\]
+\end{thm}
+
+\begin{proof}
+    Fix $\delta = \epsilon^{\frac 1 \alpha} \le 1$ and a $\delta-$net $x_1, \cdots,x_m$. For each $k=(k_1,\cdots, k_d)$ with $k_{\cdot}=\sum k_i \le \lfloor\alpha\rfloor$, define the vector
+    \[
+    A_k f = \left( \left\lfloor \frac{D^k f(x_1)}{\delta^{\alpha-k}} \right\rfloor, \ldots, \left\lfloor \frac{D^k f(x_m)}{\delta^{\alpha-k}} \right\rfloor \right).
+    \]
+    If $Af=Ag$, then we have $\|f-g\|_\infty \lesssim \epsilon$. Now we count the number of vectors. Each column of the matrix can have at most $(2\delta^{-\alpha}+2)^{(\beta+1)^d}$ different values.
+    
+    Assume WLOG that $x_1, \ldots, x_m$ have been chosen and ordered such that for each $j > 1$ there is an index $i < j$ with $\|x_i - x_j\| < 2\delta$. Then use the crude bound obtained previously for the first column only. For each later column, indexed by $x_j$, there exists a previous $x_i$ with $\|x_i - x_j\| < 2\delta$. By Taylor's theorem,
+    \[
+    D^k f(x_j) = \sum_{k_\cdot + l_\cdot \leq \beta} D^{k+l} f(x_i) \frac{(x_i - x_j)^l}{l!} + R,
+    \]
+    where $|R| \lesssim \|x_i - x_j\|^{\alpha - k_\cdot}$. Thus with $B_k f = \delta^{\alpha - k_\cdot} A_k f$,
+    \begin{align*}
+    \left| D^k f(x_j) - \sum_{k_\cdot + l_\cdot \leq \beta} B_{k+l} f(x_i) \frac{(x_i - x_j)^l}{l!} \right|
+    &\lesssim \sum_{k_\cdot + l_\cdot \leq \beta} \left| B_{k+l} f(x_i) - D^{k+l} f(x_i) \right| \frac{\|x_i - x_j\|^l}{l!} + \delta^{\alpha - k_\cdot} \\
+    &\lesssim \sum_{k_\cdot + l_\cdot \leq \beta} \delta^{\alpha - k_\cdot - l_\cdot} \cdot \frac{\delta^{l_\cdot}}{l!} + \delta^{\alpha - k_\cdot} \lesssim \delta^{\alpha - k_\cdot}.
+    \end{align*}
+    Thus given the values in the $i$th column of $Af$, the values $D^k f(x_j)$ range over an interval of length proportional to $\delta^{\alpha - k_\cdot}$. It follows that the values in the $j$th column of $Af$ range over integers in an interval of length proportional to $\delta^{k_\cdot - \alpha} \delta^{\alpha - k_\cdot} = 1$. Consequently, there exists a constant $C$ depending only on $\alpha$ and $d$ such that
+    \[
+    \#Af \leq (2\delta^{-\alpha} + 2)^{(\beta+1)^d} C^{m-1}.
+    \]
+    The theorem follows upon replacing $\delta$ by $\varepsilon^{1/\alpha}$ and $m$ by its upper bound $\lambda(\mathcal{X}^1) \varepsilon^{-d/\alpha}$, respectively, taking logarithms, and bounding $\log(1/\varepsilon)$ by a constant times $(1/\varepsilon)^{d/\alpha}$.
+\end{proof}
+
+\subsubsection{One-step Discretization Bound}
+Now we are going to discuss the metric entropy method for obtaining bounds on empirical processes. We have a metric space $(T, \rho)$, and we want to control
+\[
+\mathbb{E}\left[\sup_{\theta \in T} X_\theta\right] \quad \text{or} \quad \mathbb{E}\left[\sup_{\theta \in T} |X_\theta|\right],
+\]
+where $X_\theta$ is usually mean 0 and sub-Gaussian. We introduced the metric entropy is $\log N(\varepsilon; T, \rho)$, where $N(\varepsilon; T, \rho) = \inf\{N : |T_\varepsilon| = N, T_\varepsilon \text{ is an } \varepsilon\text{-cover}\}$ is the $\varepsilon$-covering number.
+
+Here is the one-step discretization bound that the maximal inequality gives us:
+
+\begin{lem}
+If $X_\theta \sim \mathrm{sG}(\sigma)$ for all $\theta \in T$, then
+\begin{align*}
+\mathbb{E}\left[\sup_{\theta \in T} |X_\theta|\right] &\lesssim \inf_{\varepsilon} \inf_{\varepsilon\text{-cover } T_\varepsilon} \mathbb{E}\left[\sup_{\theta \in T_\varepsilon} |X_\theta|\right] + \mathbb{E}\left[\sup_{\rho(\theta, \widetilde{\theta}) \leq \varepsilon} |X_\theta - X_{\widetilde{\theta}}|\right] \\
+&\lesssim \inf_{\varepsilon} \sigma \sqrt{\log(N(\varepsilon; T, \rho))} + \mathbb{E}\left[\sup_{\rho(\theta, \widetilde{\theta}) \leq \varepsilon} |X_\theta - X_{\widetilde{\theta}}|\right]
+\end{align*}
+\end{lem}
+
+\begin{exam}[Gaussian Complexity]
+Consider $W_i \overset{\text{iid}}{\sim} N(0, 1)$, so $\langle W, \theta \rangle \sim \mathrm{sG}(\|\theta\|_2)$. Then we know that
+\[
+\mathcal{G}(B_2(1)) = \mathbb{E}\left[ \sup_{\theta \in B_2(1)} \langle W, \theta \rangle \right] = \mathbb{E}[\|W\|_2] \asymp \sqrt{d}.
+\]
+Here is another way to get this computation:
+\begin{align*}
+\mathcal{G}(B_2(1)) &\leq C \left[ \sup_{\theta \in B_2(1)} \underbrace{\|\theta\|_2}_{=1} \underbrace{\sqrt{\log N(\varepsilon; B_2(1), \|\cdot\|_2)}}_{\leq \sqrt{d \log(1 + 2/\varepsilon)}} + \mathbb{E}_W \left[ \sup_{\|\theta - \theta'\|_2 \leq \varepsilon} |W_\theta - W_{\theta'}| \right] \right] \\
+&\leq C \left[ \sqrt{d \log(1 + 2/\varepsilon)} + \mathbb{E}_W \left[ \sup_{\|\theta - \widetilde{\theta}\|_2 \leq \varepsilon} \langle W, \theta - \theta' \rangle \right] \right] \\
+&= C \left[ \sqrt{d \log(1 + 2/\varepsilon)} + \mathbb{E}_W \left[ \sup_{\|r\|_2 \leq \varepsilon} \langle W, r \rangle \right] \right] \\
+&= C \left[ \sqrt{d \log(1 + 2/\varepsilon)} + \varepsilon \, \mathbb{E}_W \underbrace{\left[ \sup_{\|\widetilde{r}\|_2 \leq 1} \langle W, \widetilde{r} \rangle \right]}_{\mathcal{G}(B_2(1))} \right].
+\end{align*}
+This tells us that
+\[
+\mathcal{G}(B_2(1)) \leq C \sqrt{d \log(1 + 2/\varepsilon)} + C \varepsilon \mathcal{G}(B_2(1)).
+\]
+If we take $\varepsilon \leq \frac{1}{2C}$, then we get
+\[
+\mathcal{G}(B_2(1)) \leq 2C \sqrt{d \log(1 + 4C)} \asymp \sqrt{d},
+\]
+which is the same order as before.
+\end{exam}
+
+\subsubsection{Chaining Method}
+We have been using the bound
+\[
+\mathbb{E}\left[\sup_{\theta \in T} |X_\theta|\right] \lesssim \inf_{\varepsilon} \underbrace{\inf_{\varepsilon\text{-cover } T_\varepsilon} \mathbb{E}\left[\sup_{\theta \in T_\varepsilon} |X_\theta|\right]}_{\text{bdd by covering number}} + \underbrace{\mathbb{E}\left[\sup_{\rho(\theta, \widetilde{\theta}) \leq \varepsilon} |X_\theta - X_{\widetilde{\theta}}|\right]}_{\text{how to give tight control?}}
+\]
+Controlling the right term can require ad-hoc arguments. The chaining method gives a way to bound this effectively.
+
+\begin{defn}[Sub-Gaussian Process]
+$\{X_\theta\}_{\theta \in T}$ is a \textbf{sub-Gaussian process} with respect to $\rho$ on $T$ if
+\[
+\mathbb{E}[e^{\lambda(X_\theta - X_{\theta'})}] \leq e^{\lambda^2 \rho(\theta, \theta')^2 / 2},
+\]
+or, equivalently, $X_\theta - X_{\theta'}$ is $\mathrm{sG}(\rho(\theta, \theta'))$.
+\end{defn}
+
+\begin{exam}
+Let $T \subseteq \mathbb{R}^d$ with $\rho = \|\cdot\|_2$. Look at $X_\theta = \langle W, \theta \rangle$, where $W \sim N(0, I_d)$. To bound the Gaussian complexity, we want to bound $\mathbb{E}[\sup_{\theta \in T} X_\theta]$. Then $X_\theta - X'_\theta = \langle W, \theta - \theta' \rangle \sim N(0, \|\theta - \theta'\|_2^2) \sim \mathrm{sG}(\|\theta - \theta'\|_2)$.
+\end{exam}
+
+\begin{prop}[Chaining Methods]
+Let $\{X_\theta, \theta \in T\}$ be a mean 0 sub-Gaussian process with metric $\rho$. Then if $D = \sup_{\theta, \widetilde{\theta} \in T}$,
+\[
+\mathbb{E}\left[\sup_{\theta, \widetilde{\theta}} (X_\theta - X_{\widetilde{\theta}})\right] \leq \inf_{\varepsilon \leq D} 2 \left[ \sup_{\rho(r, r') \leq \varepsilon} (X_r - X_{r'}) \right] + 32 \underbrace{\int_{\varepsilon}^{D} \sqrt{\log N(u; T, \rho)} \, du}_{=: J(\varepsilon; D; T, \rho)}.
+\]
+\end{prop}
+
+Here, $J(\varepsilon; D; T, \rho)$ is known as \textbf{Dudley's entropy integral}.
+
+\begin{rem}
+This gives an upper bound for $\mathbb{E}[\sup_{\theta \in T} X_\theta]$ because by the 0 mean condition and Jensen's inequality,
+\begin{align*}
+\mathbb{E}\left[\sup_{\theta \in T} X_\theta\right] &= \mathbb{E}\left[\sup_{\theta, \theta' \in T} (X_\theta - \mathbb{E}_{\theta'}[X_{\theta'}])\right] \\
+&\leq \mathbb{E}\left[\sup_{\theta, \widetilde{\theta}} (X_\theta - X_{\widetilde{\theta}})\right].
+\end{align*}
+\end{rem}
+
+\begin{proof}
+Take a sequence of $\varepsilon$-coverings corresponding to $\varepsilon_m = D/2^m$ for $m = 0, 1, 2, 3, \ldots, L$. Let $U_m$ be the minimal $\varepsilon_m$-covering of $T$, so $|U_m| \leq N(\varepsilon_m; T_\rho)$. Then define the projection operation $\pi_m(\theta) = \arg\min_{\beta \in U_m} \rho(\theta, \beta)$.
+
+This allows us to bound
+\begin{align*}
+|X_\theta - X_{\widetilde{\theta}}| &\leq |X_\theta - X_{\pi_2(\theta)}| + |X_{\pi_2(\theta)} - X_{\pi_1(\theta)}| + |X_{\pi_1(\theta)} - X_{\pi_1(\widetilde{\theta})}| \\
+&\quad + |X_{\pi_1(\widetilde{\theta})} - X_{\pi_2(\widetilde{\theta})}| + |X_{\pi_2(\widetilde{\theta})} - X_{\widetilde{\theta}}|.
+\end{align*}
+Then we can take the expectation of $\sup_{\theta, \widetilde{\theta}}$ on both sides. What is the purpose of having all these interpolation points? The first and the last terms have infinitely many choices, so these are the discretization terms, while the middle terms have only finitely many choices, so we can apply the maximal inequality.
+\begin{align*}
+\mathbb{E}\left[\sup_{\theta, \widetilde{\theta} \in T} |X_\theta - X_{\widetilde{\theta}}|\right] &\leq \mathbb{E}\left[\sup_{\theta, \widetilde{\theta} \in T} |X_{\pi_1(\theta)} - X_{\pi_1(\widetilde{\theta})}|\right] + 2\mathbb{E}\left[\sup_{\theta \in T} |X_{\pi_2(\theta)} - X_{\pi_1(\theta)}|\right] \\
+&\quad + \cdots + 2\mathbb{E}\left[\sup_{\theta \in T} |X_{\pi_L(\theta)} - X_{\pi_{L-1}(\theta)}|\right] + 2\mathbb{E}\left[\sup_{\theta \in T} |X_\theta - X_{\pi_L(\theta)}|\right].
+\end{align*}
+These terms on the right correspond to $\varepsilon_0, \varepsilon_1, \ldots, \varepsilon_{L-1}, \varepsilon_*$, respectively. This process will define a Riemann sum. For the remaining details, see the textbook.
+\end{proof}
+
+\begin{exam}[Gaussian Complexity]
+We want to bound the Gaussian complexity $\mathcal{G}(B_2(1)) = \mathbb{E}[\sup_{\theta \in B_2(1)} \langle W, \theta \rangle]$ using chaining. We get the bound
+\begin{align*}
+\mathcal{G}(B_2(1)) &\leq C \int_0^2 \sqrt{\underbrace{\log N(u; B_2(1), \|\cdot\|_2)}_{\leq d \log(2/u + 1)}} \, du \\
+&\leq C \int_0^2 \sqrt{d \log(2/u + 1)} \, du \\
+&= C \sqrt{d} \underbrace{\int_0^2 \sqrt{\log(2/u + 1)} \, du}_{C'} \\
+&\asymp \sqrt{d}.
+\end{align*}
+\end{exam}
+
+\subsubsection{Examples of Rademacher Complexity Bounds}
+We begin with the proposition.
+\begin{prop}
+Let $\mathcal{R}_n(\mathcal{F}) := \mathbb{E}_{\varepsilon_i, X_i}\!\left[\sup_{f\in\mathcal{F}}\left|\tfrac{1}{n}\sum_{i=1}^{n}\varepsilon_i f(X_i)\right|\right]$. Then
+\begin{enumerate}
+    \item 
+    \[
+    \mathcal{R}_n(\mathcal{F})
+    \;\lesssim\; \frac{D_{\mathbb{P}}}{\sqrt{n}}\int_{0}^{1} \sup_{Q} \sqrt{\log N\!\left(D_{Q}\,u;\,\mathcal{F},\,L^2(Q)\right)}\,du,
+    \]
+    
+    \item 
+    \[
+    \mathcal{R}_n(\mathcal{F})
+    \;\lesssim\; \frac{D_{\infty}}{\sqrt{n}}\,\inf_{\varepsilon}\,\varepsilon
+    \;+\; \frac{1}{\sqrt{n}}\int_{\varepsilon}^{1} \sup_{Q} \sqrt{\log N\!\left(D_{\infty}\,u;\,\mathcal{F},\,L^\infty\right)}\,du,
+    \]
+\end{enumerate}
+where $D_{\mathbb{P}} = \sup_{f\in\mathcal{F}}\|f\|_{L^2(\mathbb{P})}$ and $D_{\infty} = \sup_{f\in\mathcal{F}}\|f\|_{\infty}$.
+\end{prop}
+
+\begin{exam}
+Let $\mathcal{F} = \{f_\theta(x) = 1 - e^{-\theta x},\ x \in [0,1] : \theta \in [0,1]\}$ be a parametric function class. Then taking the derivative gives us
+\[
+|f_{\theta_1}(x) - f_{\theta_2}(x)|
+\;\leq\; \sup_{\theta \in [\theta_1, \theta_2]} \underbrace{|x e^{-\theta x}|}_{\leq\, x}\,|\theta_1 - \theta_2|
+\;\leq\; |\theta_1 - \theta_2|.
+\]
+The covering number for the unit interval with $|\cdot|$ is bounded as
+\[
+N(\varepsilon;\,[0,1],\,|\cdot|) \;\leq\; \frac{1}{2\varepsilon} + 1,
+\]
+so we get a covering number bound for the parametric function class
+\[
+N(\varepsilon;\,\mathcal{F},\,L^\infty)
+\;\leq\; N(\varepsilon;\,[0,1],\,|\cdot|)
+\;\leq\; \frac{1}{2\varepsilon} + 1.
+\]
+Using the chaining bound with $D_\infty = \sup_{f\in\mathcal{F}}\|f\|_\infty = \sup_{f\in\mathcal{F}}\sup_{x\in[0,1]}|1 - e^{-\theta x}| \leq 1$,
+\begin{align*}
+\mathcal{R}_n(\mathcal{F})
+&\leq \frac{D_\infty}{\sqrt{n}} \int_{0}^{1} \sqrt{\log N\!\left(u D_\infty;\,\mathcal{F},\,L^\infty\right)}\, du
+\;=\; \frac{1}{\sqrt{n}} \int_{0}^{1} \sqrt{\log N\!\left(u;\,\mathcal{F},\,L^\infty\right)}\, du \\
+&= \frac{1}{\sqrt{n}} \int_{0}^{1} \sqrt{\log\!\left(\tfrac{1}{2u} + 1\right)}\, du \\
+&\lesssim \frac{C}{\sqrt{n}}.
+\end{align*}
+\end{exam}
+
+\begin{exam}[Lipschitz parameterization]
+Consider a function class $\mathcal{F} = \{f_\theta : \mathcal{X} \to \mathbb{R} : \theta \in B_2^d(1)\}$ with $\|f_0(x)\|_\infty = c_0 = 0$. If $|f_{\theta_1}(x) - f_{\theta_2}(x)| \leq L\|\theta_1 - \theta_2\|_2$, then we can use the bound
+\[
+\log N(\varepsilon;\,\mathcal{F},\,L^\infty)
+\;\leq\; \log N\!\left(\varepsilon;\,B_2^d(1),\,\|\cdot\|_2\right)
+\;\lesssim\; d\log\!\left(\tfrac{1}{\varepsilon}\right)
+\;\lesssim\; d\log\!\left(\tfrac{1}{\varepsilon} + 1\right)
+\]
+to get
+\[
+\mathcal{R}_n(\mathcal{F})
+\;\lesssim\; L \,\frac{D_\infty}{\sqrt{n}} \int_{0}^{1} \sqrt{\log N(\varepsilon;\,\mathcal{F},\,L^\infty)}\, d\varepsilon,
+\]
+where $D_\infty = \sup_\theta \|f_\theta\|_\infty \leq c_0 + L = L$. Continuing,
+\begin{align*}
+\mathcal{R}_n(\mathcal{F})
+&\lesssim \frac{L}{\sqrt{n}} \int_{0}^{1} \sqrt{d\log(1/u)}\, du \\
+&\lesssim L\sqrt{\frac{d}{n}}.
+\end{align*}
+\end{exam}
+
+\begin{exam}[Rademacher complexity of Lipschitz functions on {$[0,1]^d$}]
+For $L > 0$ and $d \in \mathbb{Z}_{\geq 1}$, consider the function class
+\[
+\mathcal{F}_L^d = \bigl\{g : [0,1]^d \to \mathbb{R} \;:\; g(\mathbf{0}) = 0,\ |g(\mathbf{x}) - g(\mathbf{y})| \leq L\|\mathbf{x} - \mathbf{y}\|_\infty\bigr\}.
+\]
+With $\mathbf{x}_i \stackrel{\mathrm{iid}}{\sim} \mathbb{P}$ and $\varepsilon_i \stackrel{\mathrm{iid}}{\sim} \mathrm{Unif}(\{\pm 1\})$, we wish to bound the Rademacher complexity
+\[
+\mathcal{R}_n(\mathcal{F}_L^d) \;=\; \mathbb{E}_{\mathbf{x}_i,\varepsilon_i}\!\left[\sup_{f\in\mathcal{F}_L^d}\left|\tfrac{1}{n}\sum_{i=1}^n \varepsilon_i f(\mathbf{x}_i)\right|\right]
+\]
+independently of $\mathbb{P}$, using two methods.
+
+\smallskip
+The two ingredients common to both arguments are the metric entropy bound
+\[
+\log N\!\left(\varepsilon;\,\mathcal{F}_L^d,\,\|\cdot\|_\infty\right) \;\lesssim\; \left(\tfrac{L}{\varepsilon}\right)^d,
+\]
+and the fact that, conditionally on $(\mathbf{x}_i)$, the quantity $\tfrac{1}{n}\sum_{i=1}^n \varepsilon_i f(\mathbf{x}_i)$ is sub-Gaussian with parameter $L/\sqrt{n}$.
+
+\smallskip
+\noindent\textit{Method 1: one-step discretization.} Let $\mathcal{N}$ be an $\varepsilon$-cover of $\mathcal{F}_L^d$. Splitting the supremum across the cover and its residual,
+\[
+\mathcal{R}_n(\mathcal{F}_L^d)
+\;\leq\; \varepsilon + \sqrt{\tfrac{2\sigma^2}{n}\,\log|\mathcal{N}|}
+\;\leq\; \varepsilon + \sqrt{\tfrac{2L^2}{n}\left(\tfrac{L}{\varepsilon}\right)^d}
+\;\asymp\; \varepsilon + \frac{L^{1+d/2}}{\sqrt{n}}\,\varepsilon^{-d/2}.
+\]
+Choosing $\varepsilon = L\, n^{-1/(d+2)}$ to balance the two terms yields
+\[
+\mathcal{R}_n(\mathcal{F}_L^d) \;\lesssim\; L\,n^{-\frac{1}{d+2}}.
+\]
+
+\smallskip
+\noindent\textit{Method 2: Dudley's entropy integral.} The chaining bound gives
+\[
+\mathcal{R}_n(\mathcal{F}_L^d)
+\;\lesssim\; \varepsilon + \frac{1}{\sqrt{n}}\int_{\varepsilon}^{2L}\!\left(\tfrac{L}{u}\right)^{d/2}\!du
+\;=\; \varepsilon + \frac{L}{\sqrt{n}}\int_{\varepsilon/L}^{2} u^{-d/2}\, du,
+\]
+whose evaluation depends on $d$:
+\[
+\begin{array}{c|c|c|c}
+\hline
+d & \displaystyle\int_{\varepsilon/L}^{2} u^{-d/2}\, du & \text{optimal } \varepsilon & \text{rate} \\
+\hline
+1 & \leq 2\sqrt{2} & 0 & \mathcal{R}_n \lesssim L/\sqrt{n} \\[2pt]
+2 & \log 2 + \log L - \log\varepsilon & L/\sqrt{n} & \mathcal{R}_n \lesssim \tfrac{L}{\sqrt{n}}(1 + \log n) \\[2pt]
+\geq 3 & \leq \tfrac{2}{d-2}(L/\varepsilon)^{d/2 - 1} & L\,n^{-1/d} & \mathcal{R}_n \lesssim L\,n^{-1/d} \\
+\hline
+\end{array}
+\]
+\end{exam}
+
+\begin{exam}[Boolean Function Classes]
+    Consider a Boolean function class $\mathcal{F} \subseteq \{f : \mathcal{X} \to \{0,1\}\}$, VC theory tells us that $\mathcal{F}$ has PD($\nu$), where $\nu = \mathrm{VC}(\mathcal{F})$. Using the maximal inequality, we have the bound
+\[
+    \mathcal{R}_n(\mathcal{F}) \lesssim \sqrt{\frac{\nu \log(n+1)}{n}}.
+\]
+We have mentioned that the log factor in this bound makes the bound not tight.
+
+\begin{prop}[Covering Number for Boolean Function Class]
+For a boolean function class with $\nu = \mathrm{VC}(\mathcal{F})$,
+\[
+    \sup_{\mathbb{P}} \log\bigl(N(\varepsilon; \mathcal{F}, L^2(\mathbb{P}))\bigr) \lesssim \nu \log\left(\frac{e}{\varepsilon}\right)
+\]
+for $\varepsilon < 1$.
+\end{prop}
+
+For a sharp but difficult proof of this bound, see theorem 2.6.4 from [Van der Vaart and Wellner, 1996]. A weaker but easier version of this bound can be found in the notes [Sen, Theorem 7.9].
+
+If we use the chaining argument, we get the bound
+\[
+    \mathcal{F}_n(\mathcal{F}) \lesssim \frac{1}{\sqrt{n}} \int_0^1 \sqrt{\nu \log(e/\varepsilon)} \, d\varepsilon \propto \sqrt{\frac{\nu}{n}}.
+\]
+\end{exam}
+
+\subsection{Glivenko-Cantelli Theorem and Donsker Theorem}
+We now generalize the preceding discussion to arbitrary function classes.
+\subsubsection{Glivenko-Cantelli Theorem}
+Recall that a class $\mathcal{F}$ is Glivenko-Cantelli when
+$$\|{\mathbb{P}_n-P}\|_{\mathcal{F}}\xrightarrow{a.s.}0,
+$$
+where
+\[
+\mathbb{P}_nf = \frac 1 n \sum_{i=1}^n f(X_i), \quad \|{\mathbb{P}_n-P}\|_{\mathcal{F}} = \sup_f \frac 1 n \sum_{i=1}^nf(X_i) -\EE f(X).
+\]
+
+\begin{thm}[Glivenko--Cantelli]
+Let \(\mathcal F\) be a \(P\)-measurable class of measurable functions with envelope \(F\) such that \(PF<\infty\). Let \(\mathcal F_M\) be the class of functions \(f\,1\{F\le M\}\) when \(f\) ranges over \(\mathcal F\). Then
+\[
+\|\mathbb P_n-P\|_{\mathcal F}\to 0
+\]
+almost surely if and only if
+\[
+n^{-1}\log N(\varepsilon,\mathcal F_M,L_1(\mathbb P_n))\to 0
+\]
+in outer probability, for every \(\varepsilon>0\) and \(M>0\). In that case both convergences are also in outer mean. In particular, the class \(\mathcal F\) is Glivenko--Cantelli if
+\[
+\log N(\varepsilon,\mathcal F,L_1(\mathbb P_n))=o_P(n)
+\]
+for every \(\varepsilon>0\).
+\end{thm}
+
+\begin{proof}
+    First, we prove $\|P_n - P\|_{\mathcal{F}}\to 0$ in mean. Using the symmetrization lemma
+    \begin{align*}
+    \mathbb{E} \|P_n - P\|_{\mathcal{F}}
+    &\le 2 \mathbb{E}_X \mathbb{E}_\epsilon \left\| \frac{1}{n} \sum_{i=1}^n \epsilon_i f(X_i) \right\|_{\mathcal{F}} \\
+    &\le 2 \mathbb{E}_X \mathbb{E}_\epsilon \left\| \frac{1}{n} \sum_{i=1}^n \epsilon_i f(X_i) \right\|_{\mathcal{F}_M}
+    + 2 P F\{F > M\}.
+    \end{align*}
+    Use $\epsilon-$net $\mathcal{G}$ to cover $\mathcal{F}_M$.
+    \[
+    \mathbb{E}_\epsilon \left\| \frac{1}{n} \sum_{i=1}^n \epsilon_i f(X_i) \right\|_{\mathcal{F}_M}
+    \le
+    \mathbb{E}_\epsilon \left\| \frac{1}{n} \sum_{i=1}^n \epsilon_i f(X_i) \right\|_{\mathcal{G}}
+    + \varepsilon.
+    \]
+    The cardinality of $\mathcal{G}$ can be chosen equal to $N(\epsilon, \mathcal{F}_M, L_1(\mathbb{P}_n))$.
+    Use $\psi_2(x)=e^{x^2}-1$, and use the maximal inequality, we have
+    \begin{align*}
+    \mathbb{E}_\epsilon \left\| \frac{1}{n} \sum_{i=1}^n \epsilon_i f(X_i) \right\|_{\mathcal{G}}
+    + \varepsilon 
+    &\le \sqrt{1 + \log N(\varepsilon, \mathcal{F}_M, L_1(\mathbb{P}_n))}
+    \;\sup_{f \in \mathcal{G}}
+    \left\| \frac{1}{n} \sum_{i=1}^n \epsilon_i f(X_i) \right\|_{\psi_2 \mid X}
+    + \varepsilon \\
+    \text{(Hoeffding)} &\le \sqrt{1 + \log N(\varepsilon, \mathcal{F}_M, L_1(\mathbb{P}_n))}
+    \sqrt{\frac{6}{n}} M
+    + \varepsilon \xrightarrow{P} \epsilon.
+    \end{align*}
+    $\mathbb{E} \|P_n - P\|_{\mathcal{F}}$ converges almost surely to $0$ by the following lemma. 
+    \begin{lem}
+    Let $\mathcal{F}$ be a class of measurable functions with envelope $F$ such that
+    $P F < \infty$. Define a filtration by letting $\mathcal{S}_n$ be the
+    $\sigma$-field generated by all measurable functions
+    $h : \mathcal{X}^\infty \to \mathbb{R}$ that are permutation-symmetric in their
+    first $n$ arguments. Then
+    \[
+    \mathbb{E}\!\left( \| \mathbb{P}_n - P \|_{\mathcal{F}} \mid \mathcal{S}_{n+1} \right)
+    \ge \| \mathbb{P}_{n+1} - P \|_{\mathcal{F}}, \quad \text{a.s.}
+    \]
+    Furthermore, there exist versions of the measurable cover functions
+    $\| \mathbb{P}_n - P \|_{\mathcal{F}}$ that are adapted to the filtration.
+    Any such versions form a reverse submartingale and converge almost surely to a constant.
+    \end{lem}
+    Another direction follows from another side of symmetrization lemma and Sudakov's inequality.
+    \[
+    \frac{1}{2}\,\mathbb{E} \left\| \frac{1}{n} \sum_{i=1}^n \epsilon_i \bigl(f(X_i) - P f\bigr) \right\|_{\mathcal{F}}
+    \le
+    \mathbb{E} \| \mathbb{P}_n - P \|_{\mathcal{F}}
+    \to 0.
+    \]
+    \[
+    \frac{1}{\sqrt{n}} \sup_{\varepsilon > 0}
+    \varepsilon \sqrt{\log N\!\left(\varepsilon, \mathcal{F}, L_2(\mathbb{P}_n)\right)}
+    \le
+    3 \mathbb{E}_\xi \left\| \frac{1}{n} \sum_{i=1}^n \xi_i f(X_i) \right\|_{\mathcal{F}}.
+    \]
+    And we get the results.
+\end{proof}
+
+\begin{rem}
+    The covering number $N(\epsilon, \mathcal F, L_1(\PP_n))$ is similar to the VC dimension. If covering number$=2^n$, $\mathcal F$ is not GC class. In some cases, $L_2(\mathbb{P}_n)$ is difficult to calculate and we can use $L^{\infty}$ to replace $L_2(\mathbb{P}_n)$.
+\end{rem}
+
+\subsubsection{Donsker Theorem}
+Recall that a class $\mathcal{F}$ is P-Donsker when $\mathbb{G}_n\xrightarrow{d}\mathbb{G}.$ Here we define $F$ as the envelope of $\mathcal F$.
+\[
+\mathbb{G}_n f = \sqrt{n}(\mathbb{P}_n - P)f = \frac{1}{\sqrt{n}} \sum_{i=1}^n (f(X_i) - Pf).
+\]
+\begin{thm}[Donsker]
+Let \(\mathcal F\) be a class of measurable functions that satisfies the uniform entropy bound
+\[
+\int_{0}^{\infty}\sup_{Q}\sqrt{\log N\bigl(\varepsilon \|F\|_{Q,2},\mathcal F,L_2(Q)\bigr)}\,d\varepsilon<\infty.
+\]
+Let the classes
+\[
+\mathcal F_\delta=\{f-g:f,g\in\mathcal F,\ \|f-g\|_{P,2}<\delta\}
+\]
+and \(\mathcal F_\infty^2\) be \(P\)-measurable for every \(\delta>0\). If \(P^{*}F^{2}<\infty\), then \(\mathcal F\) is \(P\)-Donsker.
+\end{thm}
+
+
+\subsection{Information Theory}
+To prove lower bounds, we turn to information theory, which lets us reduce estimation to hypothesis testing and gives us two main tools for the job: Le Cam's method and Fano's inequality.
+
+\subsubsection{Fundamentals}
+\paragraph{Entropy:} We begin with a central concept in information theory: the entropy. Let $P$ be a distribution on a finite (or countable) set $\mathcal{X}$, and let $p$ denote the probability mass function associated with $P$. That is, if $X$ is a random variable distributed according to $P$, then $P(X = x) = p(x)$. The \emph{entropy of $X$} (or of $P$) is defined as
+\begin{equation}
+    H(X) := -\sum_{x} p(x) \log p(x).
+\end{equation}
+Because $p(x) \leq 1$ for all $x$, it is clear that this quantity is positive. We will show later that if $\mathcal{X}$ is finite, the maximum entropy distribution on $\mathcal{X}$ is the uniform distribution, setting $p(x) = 1/|\mathcal{X}|$ for all $x$, which has entropy $\log(|\mathcal{X}|)$.
+
+\paragraph{Mutual information:} The \emph{mutual information $I(X;Y)$} between $X$ and $Y$ is the KL-divergence between their joint distribution and their products (marginal) distributions. More mathematically,
+\begin{equation}
+    I(X;Y) := \sum_{x,y} p(x,y) \log \frac{p(x,y)}{p(x)p(y)}.
+\end{equation}
+We can rewrite this in several ways. First, using Bayes' rule, we have $p(x,y)/p(y) = p(x \mid y)$, so
+\begin{align*}
+    I(X;Y) &= \sum_{x,y} p(y) p(x \mid y) \log \frac{p(x \mid y)}{p(x)} \\
+    &= -\sum_{x} \sum_{y} p(y) p(x \mid y) \log p(x) + \sum_{y} p(y) \sum_{x} p(x \mid y) \log p(x \mid y) \\
+    &= H(X) - H(X \mid Y).
+\end{align*}
+Similarly, we have $I(X;Y) = H(Y) - H(Y \mid X)$, so mutual information can be thought of as the amount of entropy removed (on average) in $X$ by observing $Y$. We may also think of mutual information as measuring the similarity between the joint distribution of $X$ and $Y$ and their distribution when they are treated as independent
+\begin{equation*}
+    I(X;Y) = D_{\mathrm{KL}}\left(P_{XY} \,\|\, P_X \times P_Y\right) \geq 0.
+\end{equation*}
+Moreover, we have $I(X;Y) > 0$ unless $X$ and $Y$ are independent.
+
+\paragraph{Entropies of continuous random variables} For continuous random variables, we may define an analogue of the entropy known as \emph{differential entropy}, which for a random variable $X$ with density $p$ is defined by
+\begin{equation}
+    h(X) := -\int p(x) \log p(x) \, dx.
+\end{equation}
+
+\begin{prop}
+    Let $X$ be a random vector on $\mathbb{R}^n$ with a density, and assume that $\mathrm{Cov}(X) = \Sigma$. Then for $Z \sim \mathsf{N}(0, \Sigma)$, we have
+    \begin{equation*}
+        h(X) \leq h(Z).
+    \end{equation*}
+\end{prop}
+
+\begin{proof}
+    Without loss of generality, we assume that $X$ has mean $0$. Let $P$ be the distribution of $X$ with density $p$, and let $Q$ be multivariate normal with mean $0$ and covariance $\Sigma$; let $Z$ be this random variable. Then
+    \begin{align*}
+        D_{\mathrm{KL}}(P \| Q) = \int p(x) \log \frac{p(x)}{q(x)} \, dx
+        &= -h(X) + \int p(x) \left[ \frac{n}{2} \log(2\pi) - \frac{1}{2} x^\top \Sigma^{-1} x \right] dx \\
+        &= -h(X) + h(Z),
+    \end{align*}
+    because $Z$ has the same covariance as $X$. As $0 \leq D_{\mathrm{KL}}(P \| Q)$, we have $h(Z) \geq h(X)$ as desired.
+\end{proof}
+
+\subsubsection{Data Processing Inequalities}
+A standard problem in information theory (and statistical inference) is to understand the degradation of a signal after it is passed through some noisy channel (or observation process). The simplest of such results, which we will use frequently, is that we can only lose information by adding noise. In particular, assume we have the Markov chain
+\begin{equation*}
+    X \to Y \to Z.
+\end{equation*}
+Then we obtain the classical \emph{data processing inequality}.
+
+\begin{prop}
+    With the above Markov chain, we have $I(X;Z) \leq I(X;Y)$.
+\end{prop}
+
+\begin{proof}
+    We expand the mutual information $I(X;Y,Z)$ in two ways:
+    \begin{align*}
+        I(X;Y,Z) &= I(X;Z) + I(X;Y \mid Z) \\
+        &= I(X;Y) + \underbrace{I(X;Z \mid Y)}_{=0},
+    \end{align*}
+    where we note that the final equality follows because $X$ is independent of $Z$ given $Y$:
+    \begin{equation*}
+        I(X;Z \mid Y) = H(X \mid Y) - H(X \mid Y, Z) = H(X \mid Y) - H(X \mid Y) = 0.
+    \end{equation*}
+    Since $I(X;Y \mid Z) \geq 0$, this gives the result.
+\end{proof}
+
+There are related data processing inequalities for the KL-divergence---which we generalize in the next section---as well. In this case, we may consider a simple Markov chain $X \to Z$. If we let $P_1$ and $P_2$ be distributions on $X$ and $Q_1$ and $Q_2$ be the induced distributions on $Z$, that is, $Q_i(A) = \int \mathbb{P}(Z \in A \mid x) \, dP_i(x)$, then we have
+\begin{equation*}
+    D_{\mathrm{KL}}(Q_1 \| Q_2) \leq D_{\mathrm{KL}}(P_1 \| P_2),
+\end{equation*}
+the basic KL-divergence data processing inequality. A consequence of this is that, for any function $f$ and random variables $X$ and $Y$ on the same space, we have
+\begin{equation*}
+    D_{\mathrm{KL}}(f(X) \| f(Y)) \leq D_{\mathrm{KL}}(X \| Y).
+\end{equation*}
+
+
+\subsubsection{Minimax Lower Bound}
+In statistical decision theory, we have a class of distributions $\mathcal{P}$ and a parameter/function of distributions $\theta : \mathcal{P} \to \Theta$. If this is a one to one mapping, we write $\mathcal{P} = \{\mathbb{P}_\theta : \theta \in \Theta\}$. Then we have \textbf{statistical estimators}, which are mappings $\widehat{\theta} : \mathcal{X} \to \Theta$. Suppose there is a \textbf{semimetric} $\rho(\theta, \theta') : \Theta \times \Theta \to \mathbb{R}$, such as
+\begin{equation*}
+    \rho(\theta, \theta') = \|\theta - \theta'\|_2, \qquad \rho(f, f') = \|f - f'\|_{L^2}.
+\end{equation*}
+If $\Phi : [0, \infty) \to [0, \infty)$ is increasing, the \textbf{risk} is
+\begin{equation*}
+    R(\widehat{\theta}; \theta(P)) = \mathbb{E}_{X \sim P}[\Phi(\rho(\widehat{\theta}(X); \theta(P)))].
+\end{equation*}
+In this framework, the \textbf{loss function} is $\ell = \Phi \circ \rho$.
+
+\begin{defn}
+    The \textbf{minimax risk} with $n$ samples is
+    \begin{equation*}
+        \mathcal{M}_n(\theta(\mathcal{P}), \Phi \circ \rho) = \inf_{\widehat{\theta} : \mathcal{X} \to \Theta} \sup_{P \in \mathcal{P}} R(\widehat{\theta}; \theta(P)).
+    \end{equation*}
+\end{defn}
+
+The inf and the sup mean that we are taking the best estimator for the worst model.
+\begin{enumerate}
+    \item[(a)] If $R(\widehat{\theta})$ achieves $\mathcal{M}_n$, it is good enough.
+    \item[(b)] If $R(\widehat{\theta}) \gg \mathcal{M}_n$, we should either find a better estimator or a sharper lower bound.
+\end{enumerate}
+
+
+The idea is to find a testing problem easier than the estimation problem. A lower bound for the testing problem will imply a lower bound for estimation.
+
+\paragraph{Step 1:} Construct a $2\delta$-separated set of $\Theta$ in the $\rho$-metric.
+So we require $\rho(\theta^i, \theta^j) \geq 2\delta$ for all $i \neq j$. This is the same as a packing, except we allow $\geq$ instead of $>$. If our separated set is $\{\theta^1, \theta^2, \ldots, \theta^M\}$, we get $\{\mathbb{P}_{\theta^1}, \mathbb{P}_{\theta^2}, \ldots, \mathbb{P}_{\theta^M}\}$.
+
+\paragraph{Step 2:} Sample $(J, Z) \in [M] \times \mathcal{X}$. The joint distribution is
+\begin{equation*}
+    \begin{cases}
+        J \sim \mathrm{Unif}(\{1, 2, \ldots, M\}) \\
+        Z \mid J = j \sim \mathbb{P}_{\theta^j}.
+    \end{cases}
+\end{equation*}
+
+\paragraph{Step 3:} Let $\mathbb{Q}$ be the joint distribution of $(J, Z)$. Then the marginal distribution of $Z$ is
+\begin{equation*}
+    \overline{\mathbb{Q}} = \frac{1}{M} \sum_{j=1}^{M} \mathbb{P}_{\theta^j}.
+\end{equation*}
+Our testing problem is that we want to find a $\psi : \mathcal{X} \to [M]$ such that $\mathbb{Q}(\psi(Z) \neq J)$ is small. If $M = 2$, this is standard binary hypothesis testing. The testing error is
+\begin{equation*}
+    \mathbb{Q}(\psi(Z) \neq J) = \frac{1}{2} \big[ \underbrace{\mathbb{P}_{\theta^1}(\psi(Z) \neq 1)}_{\text{Type I error}} + \underbrace{\mathbb{P}_{\theta^2}(\psi(Z) \neq 2)}_{\text{Type II error}} \big].
+\end{equation*}
+This is different from the traditional hypothesis testing setup in that instead of fixing the Type I error and minimizing the Type II error, we want to minimize the average of these errors.
+
+\begin{prop}[From estimation to testing]
+    Let $\Phi$ be increasing and $\{\theta^1, \ldots, \theta^M\}$ be $2\delta$-separated for $\delta > 0$. Then
+    \begin{equation*}
+        \mathcal{M}_n(\theta(\mathcal{P}), \Phi \circ \rho) \geq \Phi(\delta) \inf_{\psi} \mathbb{Q}(\psi(Z) \neq J).
+    \end{equation*}
+\end{prop}
+
+This works for all $\delta > 0$, so we can pick the $\delta$ which gives the best lower bound. In general, $\Phi(\delta)$ is increasing with $\delta$, but the testing error $\inf_\psi \mathbb{Q}(\psi(Z) \neq J)$ is decreasing with $\delta$. We can choose $\delta = \delta_n$ such that $\inf_\psi \mathbb{Q}(\psi(Z) \neq J) = \frac{1}{2}$; any constant would work here. Then the minimax lower bound will be
+\begin{equation*}
+    \mathcal{M}_n \geq \frac{1}{2} \Phi(\delta_n).
+\end{equation*}
+
+\begin{proof}
+    Fix $P$ and $\widehat{\theta}$. By Markov's inequality,
+    \begin{align*}
+        \mathbb{E}[\Phi(\rho(\widehat{\theta}, \theta))] &\geq \Phi(\delta) \mathbb{P}(\Phi(\rho(\widehat{\theta}, \theta)) \geq \Phi(\delta)) \\
+        &= \Phi(\delta) \mathbb{P}(\rho(\widehat{\theta}, \theta) \geq \delta).
+    \end{align*}
+    We now want to relate this probability with the testing error. We have
+    \begin{align*}
+        \sup_{P \in \mathcal{P}} \mathbb{P}(\rho(\widehat{\theta}, \theta) \geq \delta)
+        &\geq \sup_{\theta \in \{\theta^1, \ldots, \theta^M\}} \mathbb{P}_\theta(\rho(\widehat{\theta}, \theta) \geq \delta) \\
+        &\geq \frac{1}{M} \sum_{j=1}^{M} \mathbb{P}_{\theta^j}(\rho(\widehat{\theta}, \theta^j) \geq \delta) \\
+        &= \mathbb{Q}(\rho(\widehat{\theta}, \theta^J) \geq \delta).
+    \end{align*}
+    Define a test $\psi$ via $\widehat{\theta}$: Let
+    \begin{equation*}
+        \psi(z) = \arg\min_{L \in [M]} \rho(\widehat{\theta}(Z), \theta^L).
+    \end{equation*}
+    This gives the $\theta^j$ which is the closest to our estimate $\widehat{\theta}(Z)$. With this definition,
+    \begin{equation*}
+        \{\psi(Z) \neq J\} \subseteq \{\rho(\widehat{\theta}(Z), \theta^J) \geq \delta\}.
+    \end{equation*}
+    This means we can lower bound the above $\mathbb{Q}$ probability:
+    \begin{equation*}
+        \inf_{\widehat{\theta}} \mathbb{Q}(\rho(\widehat{\theta}(Z), \theta^J) \geq \delta) \geq \inf_{\psi} \mathbb{Q}(\psi(Z) \neq J).
+    \end{equation*}
+\end{proof}
+
+\begin{rem}
+    How do we choose $\{\theta^1, \ldots, \theta^M\}$? Moreover, how do we lower bound $\inf_\psi \mathbb{Q}(\psi(Z) \neq J)$? Here are two general methods.
+
+\begin{enumerate}
+    \item $M = 2$: Le Cam's Method
+    \item $M \geq 3$: Fano's Method
+\end{enumerate}
+\end{rem}
+
+\paragraph{Some Divergence Measures}
+Recall the definition of the total variation distance, the KL divergence, and the Hellinger distance
+\begin{align*}
+    \|\mathbb{P} - \mathbb{Q}\|_{\mathrm{TV}} &= \frac{1}{2} \int_{\mathcal{X}} |p(x) - q(x)| \, dx, \\
+    D(\mathbb{P} \| \mathbb{Q}) &= \int_{\mathcal{X}} p(x) \log \frac{p(x)}{q(x)} \, dx, \\
+    \mathbb{H}^2(\mathbb{P} \| \mathbb{Q}) &= \int_{\mathcal{X}} \left( \sqrt{p(x)} - \sqrt{q(x)} \right)^2 dx.
+\end{align*}
+These have the following relationships:
+\begin{align*}
+    \|\mathbb{P} - \mathbb{Q}\|_{\mathrm{TV}} &\leq \sqrt{\tfrac{1}{2} D(\mathbb{P} \| \mathbb{Q})}, \\
+    \|\mathbb{P} - \mathbb{Q}\|_{\mathrm{TV}} &\leq \sqrt{\mathbb{H}^2(\mathbb{P} \| \mathbb{Q})} \underbrace{\sqrt{1 - \frac{\mathbb{H}^2(\mathbb{P} \| \mathbb{Q})}{4}}}_{\leq 1}, \\
+    \mathbb{H}^2(\mathbb{P} \| \mathbb{Q}) &\leq \frac{1}{2} D(\mathbb{P} \| \mathbb{Q}).
+\end{align*}
+
+\paragraph{Le Cam’s Two Points Method}
+Take $M = 2$. Then $J \sim \mathrm{Unif}(\{0, 1\})$, and $Z \mid J = j \sim \mathbb{P}_j$, and $\overline{\mathbb{Q}} = \frac{1}{2}\mathbb{P}_0 + \frac{1}{2}\mathbb{P}_1$. We claim that
+\begin{equation*}
+    \inf_\psi \mathbb{Q}(\psi(Z) \neq J) = \frac{1}{2}\left(1 - \|\mathbb{P}_0 - \mathbb{P}_1\|_{\mathrm{TV}}\right).
+\end{equation*}
+
+\begin{proof}
+    For any $\psi$, we can find an $A$ such that
+    \begin{equation*}
+        \psi(x) = \begin{cases} 1 & x \in A \\ 0 & x \in A^c. \end{cases}
+    \end{equation*}
+    Then
+    \begin{align*}
+        \mathbb{Q}(\psi(Z) = J) &= \frac{1}{2}\mathbb{P}_1(A) + \frac{1}{2}\mathbb{P}_0(A^c) \\
+        &= \frac{1}{2}(\mathbb{P}_1(A) - \mathbb{P}_0(A)) + \frac{1}{2}.
+    \end{align*}
+    If we take the supremum over all $\psi$, we get
+    \begin{align*}
+        \sup_\psi \mathbb{Q}(\psi(Z) = J) &= \sup_A \frac{1}{2}(\mathbb{P}_1(A) - \mathbb{P}_0(A)) + \frac{1}{2} \\
+        &= \frac{1}{2}\|\mathbb{P}_1 - \mathbb{P}_0\|_{\mathrm{TV}} + \frac{1}{2}.
+    \end{align*}
+    The probability of the bad event is then
+    \begin{equation*}
+        \inf_\psi \mathbb{Q}(\psi(Z) \neq J) = \frac{1}{2} - \frac{1}{2}\|\mathbb{P}_1 - \mathbb{P}_0\|_{\mathrm{TV}}.
+    \end{equation*}
+\end{proof}
+
+This gives the following theorem.
+
+\begin{thm}[Le Cam's Two Points Lower Bound]
+    For all $\delta > 0$ and $\mathbb{P}_0, \mathbb{P}_1 \in \mathcal{P}$ with $\rho(\theta(\mathbb{P}_0), \theta(\mathbb{P}_1)) \geq 2\delta$,
+    \begin{equation*}
+        \mathcal{M}_n(\theta(\mathcal{P}), \Phi \circ \rho) \geq \frac{\Phi(\delta)}{2}\left(1 - \|\mathbb{P}_1 - \mathbb{P}_0\|_{\mathrm{TV}}\right).
+    \end{equation*}
+\end{thm}
+
+\begin{exam}[Gaussian Location Family, $d=1$]
+    Our model is $\mathcal{P} = \{\mathbb{P}_\theta = \mathsf{N}(\theta, \sigma^2) : \theta \in \mathbb{R}\}$, where $\sigma$ is known. We have the semimetric $\rho(\theta', \theta) = |\theta' - \theta|$ and $\Phi(t) = t^2$. Our sample is $X_{1:n} \sim \mathbb{P}_\theta^n$. The true minimax risk is $\mathcal{M}_n = \frac{\sigma^2}{n}$. Here is a lower bound by Le Cam's method:
+
+    Consider $\mathbb{P}_{2\delta}$ and $\mathbb{P}_0$, so $\rho(2\delta, 0) \geq 2\delta$. Then
+    \begin{equation*}
+        \mathcal{M}_n(\theta(\mathcal{P}); |\theta - \theta'|^2) \geq \frac{\delta^2}{2}\left(1 - \|\mathbb{P}_{2\delta}^n - \mathbb{P}_0^n\|_{\mathrm{TV}}\right),
+    \end{equation*}
+    where the $n$ only appears in the bound as the fact that the measures are product measures. We want to lower bound $1 - \|\mathbb{P}_{2\delta}^n - \mathbb{P}_0^n\|_{\mathrm{TV}}$ by $1/2$. We have by Pinsker's inequality and the tensorization property of K-L divergence
+    \begin{align*}
+        \|\mathbb{P}_{2\delta}^n - \mathbb{P}_0^n\|_{\mathrm{TV}}^2
+        &\leq \frac{1}{2} D(\mathbb{P}_{2\delta}^n \| \mathbb{P}_0^n) \\
+        &= \frac{1}{2} n D(\mathbb{P}_{2\delta} \| \mathbb{P}_0) \\
+        &= \frac{1}{2} n \cdot \frac{(2\delta)^2}{2\sigma^2} \\
+        &= \frac{n\delta^2}{\sigma^2}.
+    \end{align*}
+    Now choose $\frac{n\delta^2}{\sigma^2} = \frac{1}{2}$, so $\delta_n^2 = \frac{\sigma^2}{2n}$. Then $\|\mathbb{P}_{2\delta_n}^n - \mathbb{P}_0^n\|_{\mathrm{TV}} \leq \frac{1}{2}$, and we get the minimax lower bound
+    \begin{equation*}
+        \mathcal{M}_n \geq \frac{\delta_n^2}{2} \cdot \frac{1}{2} = \frac{\sigma^2}{16n}.
+    \end{equation*}
+    Up to constants, this is sharp.
+
+    Here is the problem with Le Cam's method. If we take $\theta \in \mathbb{R}^d$ with $\mathbb{P}_\theta = \mathsf{N}(0, \sigma^2 I_d)$ for $d \geq 2$, then we will get the lower bound
+    \begin{equation*}
+        \mathcal{M}_n \geq \frac{\sigma^2}{16n},
+    \end{equation*}
+    even though the actual minimax risk is $\mathcal{M}_n = \sigma^2 \frac{d}{n}$.
+\end{exam}
+
+Let
+\begin{equation*}
+    \mathbb{Q} : \begin{cases}
+        J \sim \mathrm{Unif}(\{1, 2, \ldots, M\}) \\
+        Z \mid J = j \sim \mathbb{P}_{\theta^j}.
+    \end{cases}
+\end{equation*}
+
+\begin{lem}
+    \begin{equation*}
+        \inf_\psi \mathbb{Q}(\psi(Z) \neq J) \geq 1 - \frac{I(Z;J) + \log 2}{\log M}.
+    \end{equation*}
+\end{lem}
+
+The proof is in Section 15.4 and requires some ideas such as the entropy. This does not require any restriction on the $\mathbb{P}_{\theta^j}$. This lower bound gives us
+
+\begin{prop}
+    Let $\{\theta^1, \ldots, \theta^M\}$ be $2\delta$-separated in the semimetric $\rho$. Then
+    \begin{equation*}
+        \mathcal{M}_n(\theta(\mathcal{P}); \Phi \circ \rho) \geq \Phi(\delta) \left( 1 - \frac{I(Z;J) + \log 2}{\log M} \right).
+    \end{equation*}
+\end{prop}
+
+When using this lower bound, we will find $\delta_n$ such that
+\begin{equation*}
+    1 - \frac{I(Z;J) + \log 2}{\log M} \geq \frac{1}{2}.
+\end{equation*}
+Then we will get
+\begin{equation*}
+    \mathcal{M}_n \geq \frac{1}{2} \Phi(\delta_n).
+\end{equation*}
+So we need to upper bound $I(Z;J)$.
+
+A simple upper bound is given by
+\begin{align*}
+    I(J;Z) &= \frac{1}{M} \sum_{j=1}^{M} D\!\left( \mathbb{P}_{\theta^j} \,\Big\|\, \frac{1}{M} \sum_{\ell=1}^{M} \mathbb{P}_{\theta^\ell} \right) \\
+    &\leq \frac{1}{M^2} \sum_{j,\ell=1}^{M} D(\mathbb{P}_{\theta^j} \| \mathbb{P}_{\theta^\ell}) \\
+    &\leq \max_{j,\ell} D(\mathbb{P}_{\theta^j} \| \mathbb{P}_{\theta^\ell}).
+\end{align*}
+Where we have used Jensen's inequality to show that the K-L divergence is convex in the second argument.
+
+\begin{exam}[Gaussian location family, $d \geq 2$]
+    Our model is $\mathcal{P} = \{\mathbb{P}_\theta = \mathsf{N}(0, \sigma^2 I_d) : \theta \in \mathbb{R}^d\}$, where $\sigma$ is known. Our semimetric is $\rho(\theta', \theta) = \|\theta' - \theta\|_2$ with $\Phi(t) = t^2$. The true minimax risk is
+    \begin{equation*}
+        \mathcal{M}_n = \inf_{\widehat{\theta}} \sup_{\theta} \mathbb{E}[\|\widehat{\theta} - \theta\|_2^2] = \sigma^2 \frac{d}{n}.
+    \end{equation*}
+    The lower bound by Fano's method gives
+    \begin{align*}
+        \mathcal{M}_n &\geq \Phi(\delta) \left( 1 - \frac{I(Z;J) + \log 2}{\log M} \right) \\
+        &\geq \Phi(\delta) \left( 1 - \frac{\max_{j,k} D(\mathbb{P}_{\theta^j}^n \| \mathbb{P}_{\theta^k}^n) + \log 2}{\log M} \right).
+    \end{align*}
+    Our goal is to find the largest $\delta_n, M, \{\theta^1, \ldots, \theta^M\}$ such that
+    \begin{enumerate}
+        \item[(a)] $\|\theta^j - \theta^k\|_2 \geq 2\delta_n$
+        \item[(b)] \begin{equation*}
+            \frac{\max_{j,k} D(\mathbb{P}_{\theta^j}^n \| \mathbb{P}_{\theta^k}^n) + \log 2}{\log M} \leq \frac{1}{2}.
+        \end{equation*}
+    \end{enumerate}
+
+    Here is our construction: Let $\varepsilon_n = \sigma \sqrt{\frac{d}{n}}$ and $\delta_n = \frac{1}{100} \varepsilon_n = \frac{1}{100} \sigma \sqrt{\frac{d}{n}}$. Let $\{\theta^1, \ldots, \theta^M\}$ be a maximal $2\delta_n$ packing of $B(0, \varepsilon_n) = \{\theta \in \mathbb{R}^d : \|\theta\|_2 \leq \varepsilon_n\}$.
+
+    By a volume argument, we can get upper and lower bounds of $M$:
+    \begin{equation*}
+        \log M \asymp d \log\left( c \frac{\varepsilon_n}{\delta_n} \right) \asymp c \cdot d.
+    \end{equation*}
+    To upper bound the K-L divergence on top, we have
+    \begin{align*}
+        \max_{j,k} D(\mathbb{P}_{\theta^j}^n \| \mathbb{P}_{\theta^k}^n)
+        &= n \max_{j,k} D(\mathbb{P}_{\theta^j} \| \mathbb{P}_{\theta^k}) \\
+        &= n \max_{j,k} \frac{\|\theta^j - \theta^k\|_2^2}{2\sigma^2} \\
+        &\leq \frac{n \varepsilon_n^2}{2\sigma^2} \\
+        &= c \cdot d.
+    \end{align*}
+    Our quantities only depend on the ratio between $\varepsilon_n$ and $\delta_n$, so we can adjust the constant in front of $\delta_n$ to get the desired upper bound of $\frac{1}{2}$.
+
+    We then get
+    \begin{equation*}
+        \mathcal{M}_n \geq \Phi(\delta_n) \frac{1}{2} = \frac{1}{2} \cdot \left( \frac{1}{100} \right)^2 \sigma^2 \frac{d}{n} = c \sigma^2 \frac{d}{n}.
+    \end{equation*}
+\end{exam}
+
+The bound on $I(J;Z)$ by the max of the K-L divergences is generally only good when we have a parametric problem. For nonparametric problems, we want to use a better bound.
+
+\begin{lem}[Yang-Barron's Bound]
+    Let $N_{\mathrm{KL}}(\varepsilon; \mathcal{P})$ be an $\varepsilon$-cover of $\mathcal{P}$ in $\sqrt{D_{\mathrm{KL}}}$. Then
+    \begin{equation*}
+        I(Z;J) \leq \inf_{\varepsilon > 0} \varepsilon^2 + \log N_{\mathrm{KL}}(\varepsilon; \mathcal{P})
+    \end{equation*}
+\end{lem}
+
+To apply this bound, we have two steps:
+\begin{enumerate}
+    \item Choose $\varepsilon_n > 0$ such that
+    \begin{equation*}
+        \varepsilon_n^2 \geq \log N_{\mathrm{KL}}(\varepsilon_n; \mathcal{P}).
+    \end{equation*}
+    \item Choose the largest $\delta_n > 0$ such that
+    \begin{equation*}
+        \log M(\delta_n; \rho, \Omega) \geq 4\varepsilon_n^2 + 2 \log 2.
+    \end{equation*}
+\end{enumerate}

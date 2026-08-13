@@ -1,10 +1,644 @@
 \newpage
 \section{Parameter Estimation}
 In this section, we study one of the central topics in statistics: parameter estimation. This is the beginning of our tour! 
-The chapter is organized as follows: 
+The section is organized as follows: 
 \begin{enumerate}
-    \item 
+    \item Fundamentals
+    \item Methods of Estimation
+    \item Large Sample Theory
 \end{enumerate}
 
-This chapter mainly follows STAT300A (Stanford University), STAT300C (Stanford University) and Mathematics Statistics (Peking University, taught by Fang Yao). I also refered to the book Theoretical Statistics~\cite{cox1979theoretical}.
+This section mainly follows STAT210A (UC Berkeley), STAT300A (Stanford University), STAT300B (Stanford University) and Mathematics Statistics (Peking University, taught by Fang Yao). I also refered to the book Theoretical Statistics~\cite{cox1979theoretical}.
 
+\subsection{Fundamentals}
+Not all data is relevant to a particular decision problem.
+\begin{defn}[Statistic]
+A statistic $T : \mathcal{X} \to \mathcal{T}$ is a function of the data.
+\end{defn}
+
+\begin{defn}[Sufficient Statistic]
+A statistic is sufficient for a model $\mathcal{P} = \{\mathbb{P}_\theta : \theta \in \Omega\}$ if for all $t$, the conditional distribution $X \mid T(x) = t$ does not depend on $\theta$.
+\end{defn}
+
+\begin{thm}[Neyman-Fisher Factorization Criterion (NFFC)]
+Suppose each $\mathbb{P}_\theta \in \mathcal{P}$ has density $p(x; \theta)$ w.r.t. a common $\sigma$-finite measure $\mu$, i.e., $\frac{d\mathbb{P}_\theta}{d\mu} = p(x; \theta)$. Then $T(X)$ is sufficient if and only if $p(x; \theta) = g_\theta(T(x)) h(x)$ for some $g_\theta, h$.
+\end{thm}
+
+\begin{exam}
+    The model $\{\mathbb{P}_\theta : \theta \in \Omega\}$ forms an \textbf{$s$-dimensional exponential family} if each $\mathbb{P}_\theta$ has density of the form:
+    \[
+    p(x; \theta) = \exp\left( \sum_{i=1}^{s} \eta_i(\theta) T_i(x) - B(\theta) \right) h(x)
+    \]
+    \begin{itemize}
+        \item $\eta_i(\theta) \in \mathbb{R}$ are called the \textbf{natural parameters}.
+        \item $T_i(x) \in \mathbb{R}$ are its \textbf{sufficient statistics}, which follows from \textbf{NFFC}.
+        \item $B(\theta)$ is the log-partition function because it is the logarithm of a normalization factor:
+        \[
+        B(\theta) = \log\left( \int \exp\left( \sum_{i=1}^{s} \eta_i(\theta) T_i(x) \right) h(x)\, d\mu(x) \right) \in \mathbb{R}
+        \]
+        \item $h(x) \in \mathbb{R}$: base measure.
+    \end{itemize}
+    Exponential families are of particular interest to us, because many common distributions are exponential families (e.g., Normal, Binomial, and Poisson)
+\end{exam}
+\begin{defn}[Minimal Sufficiency]
+A sufficient statistic $T$ is \textbf{minimal} if for every sufficient statistic $T'$ and for every $x, y \in \mathcal{X}$, $T(x) = T(y)$ whenever $T'(x) = T'(y)$. In other words, $T$ is a function of $T'$ (there exists $f$ such that $T(x) = f(T'(x))$ for any $x \in \mathcal{X}$).
+\end{defn}
+
+\begin{thm}
+Let $\{p(x; \theta), \theta \in \Omega\}$ be a family of densities with respect to some measure $\mu$. Suppose that there exists a statistic $T$ such that for every $x, y \in \mathcal{X}$:
+\[
+p(x; \theta) = C_{x,y} p(y; \theta) \quad \Longleftrightarrow \quad T(x) = T(y)
+\]
+for every $\theta$ and some $C_{x,y} \in \mathbb{R}$. Then $T$ is a minimal sufficient statistic.
+\end{thm}
+
+\begin{defn}[Ancillary]
+A statistic $A$ is \textbf{ancillary} for $X \sim \mathbb{P}_\theta \in \mathcal{P}$ if the distribution of $A(X)$ does not depend on $\theta$.
+\end{defn}
+
+\begin{defn}[First-Order Ancillary]
+A statistic $A$ is \textbf{first-order ancillary} for $X \sim \mathbb{P}_\theta \in \mathcal{P}$ if $\mathbb{E}_\theta[A(X)]$ does not depend on $\theta$.
+\end{defn}
+
+From this we define the concept of complete statistics.
+
+\begin{defn}[Complete Statistic]
+A statistic $T$ is \textbf{complete} for $X \sim \mathbb{P}_\theta \in \mathcal{P}$ if no non-constant function of $T$ is first-order ancillary. In other words, if $\mathbb{E}_\theta[f(T(X))] = 0$ for all $\theta$, then $f(T(X)) = 0$ with probability 1 for all $\theta$.
+\end{defn}
+\begin{rem}
+    Every last bit of information has been mined.
+\end{rem}
+
+\begin{thm}[Complete Statistics for Exponential Family]
+$(T_1, \ldots, T_s)$ is complete for any $s$-dimensional full rank exponential family.
+\end{thm}
+
+\begin{thm}[Basu's Theorem]
+If $T$ is complete and sufficient for $\mathcal{P} = \{\mathbb{P}_\theta : \theta \in \Omega\}$, and $A$ is ancillary then $T(X) \perp\!\!\!\perp A(X)$.
+\end{thm}
+
+\begin{exam}
+$X_1, \ldots, X_n \stackrel{i.i.d}{\sim} \mathcal{N}(\mu, \sigma^2)$ ($\mu, \sigma^2$ both unknown). \\
+Claim: $\bar{X} \perp\!\!\!\perp \frac{1}{n} \sum_{i=1}^{n} (X_i - \bar{X})^2$.
+\end{exam}
+
+\begin{proof}
+Fix any $\sigma > 0$, and consider the submodel $\mathcal{P}_\sigma = \{\mathcal{N}(\mu, \sigma^2) : \mu \in \mathbb{R}\}$. In each submodel, $\bar{X}$ is complete and sufficient, and $\frac{1}{n} \sum_{i=1}^{n} (X_i - \bar{X})^2$ is ancillary. By Basu's Theorem, $\bar{X} \perp\!\!\!\perp \sum_{i=1}^{n} (X_i - \bar{X})^2$ under $\mathcal{N}(\mu, \sigma^2)$ for any $\mu$. Since $\sigma$ is arbitrary, we have $\bar{X} \perp\!\!\!\perp \frac{1}{n} \sum_{i=1}^{n} (X_i - \bar{X})^2$ for the full model.
+\end{proof}
+
+\subsection{Methods of Estimation}
+Now we introduce loss function to describe the quality of estimators quantitatively. Consider $\theta$ as the decision rule, and $R(\theta,\delta) = \EE_\theta L(\theta, \delta(X))$ as the risk function.
+\begin{thm}[Rao-Blackwell Theorem, K 3.28]
+Suppose that $T$ is sufficient for $\mathbb{P} = \{\mathbb{P}_\theta, \theta \in \Omega\}$, that $\delta(X)$ is an estimator for $g(\theta)$ for which $\mathbb{E}(\delta(X))$ exists, and that $R(\theta, \delta) = \mathbb{E}_\theta L(\theta, \delta(X)) < \infty$. If $L(\theta, \cdot)$ is convex, then
+\[
+R(\theta, \eta) \leq R(\theta, \delta) \quad \text{for} \quad \eta(T(X)) = \mathbb{E}(\delta(X) \mid T(X)).
+\]
+If $L(\theta, \cdot)$ is strictly convex, then $R(\theta, \eta) < R(\theta, \delta)$ for any $\theta$ unless $\eta(T'(x)) = \delta$ w.p.~1.
+\end{thm}
+
+\subsubsection{Unbiased Estimation}
+An estimator is unbiased if $\EE_\theta[\delta(X)] = g(\theta)$ (to estimate). Although uniformly best estimator does not exist, quite often, we can find a unbiased estimator with uniformly minimum risk, that is, an unbiased $\delta$ satisfying $R(\theta, \delta) \le R(\theta, \delta')$, $\forall \theta$ and any other unbiased estimators $\delta'$. Such an estimator is called a \textbf{uniformly minimum risk unbiased estimator (UMRUE)}.
+
+Consider $L(\theta, d) = (\theta-d)^2$, then an UMRUE becomes a \textbf{uniformly minimum variance unbiased estimator (UMVUE)}.
+\begin{align*}
+\mathbb{E}_\theta\left[(\theta - \delta(X))^2\right] &= \left(\mathbb{E}_\theta[\delta(X)] - \theta\right)^2 + \mathbb{E}_\theta\left\{\left(\delta(X) - \mathbb{E}_\theta[\delta(X)]\right)^2\right\} \\
+&= \text{Bias}^2 + \text{Variance}.
+\end{align*}
+\begin{thm}[Lehmann-Scheffe Theorem]
+If $T$ is a complete and sufficient statistic, and $\mathbb{E}_\theta[h(T(X))] = g(\theta)$ (i.e., $h(T(x))$ is unbiased for $g(\theta)$), then $h(T(X))$ is
+\begin{enumerate}
+    \item the only function of $T(X)$ that is unbiased for $g(\theta)$
+    \item an UMRUE under any convex loss function,
+    \item the unique UMRUE (up to a $\mathcal{P}$--null set) under any strictly convex loss function,
+    \item the unique UMVUE (up to a $\mathcal{P}$--null set).
+\end{enumerate}
+\end{thm}
+\begin{exam}
+Let $X_1, \ldots, X_n \stackrel{iid}{\sim} \mathcal{N}(\mu, \sigma^2)$. First, note that if $\sigma^2$ is known, $\bar{X}$ is a complete sufficient statistic for $\mu$ and hence also the UMVUE. Consider the case when $\theta = (\mu, \sigma^2)$ is unknown.
+\begin{enumerate}
+    \item[(a)] The UMVUE for $\mu$ is $\bar{X}$.
+    \item[(b)] The UMVUE for $\sigma^2$ is $\sum_{i=1}^{n} \frac{(X_i - \bar{X})^2}{n-1}$.
+    \item[(c)] What is the UMVUE for $\sigma$? First, note that $X_i - \bar{X} \sim \mathcal{N}(0, \frac{n-1}{n} \sigma^2)$, and hence $\mathbb{E}[|X_i - \bar{X}|] = \sigma \sqrt{\frac{2}{\pi}} \sqrt{\frac{n-1}{n}}$. This implies
+    \[
+    \frac{\sqrt{\pi n}}{\sqrt{2(n-1)}} |X_i - \bar{X}|
+    \]
+    is unbiased for $\sigma$. At this point we could Rao-Blackwellize, but the math is messy. Instead, we will try to stumble upon the solution. Let
+    \[
+    S^2 = \sum_{i=1}^{n} (X_i - \bar{X})^2.
+    \]
+    We know that
+    \[
+    S^2 \sim \sigma^2 \chi^2_{n-1}.
+    \]
+    Thus,
+    \[
+    \mathbb{E}(S) = \sigma \mathbb{E}(\chi_{n-1}).
+    \]
+    Which in turn implies that
+    \[
+    \frac{\mathbb{E}(S)}{\mathbb{E}(\chi_{n-1})} = \sigma,
+    \]
+    meaning $\frac{S}{\mathbb{E}(\chi_{n-1})}$ is unbiased for $\sigma$ and hence UMVU.
+    \item[(d)] What is the UMVUE for $\mu^2$? Taking the expectation of the UMVUE for $\mu$ and squaring it yields
+    \[
+    \mathbb{E}(\bar{X}^2) = \mu^2 + \sigma^2 / n.
+    \]
+    So,
+    \[
+    \delta_n(X) = \bar{X}^2 - \frac{S^2}{n(n-1)}
+    \]
+    is the UMVUE. Note that $\delta_n(X)$ may be negative even though it estimates a non-negative quantity. Indeed, $\delta_n$ is inadmissible and dominated by the biased estimator $\max(0, \delta_n(X))$.
+\end{enumerate}
+\end{exam}
+If we know some prior knowledge of the estimators (eg: Equivariant, Invariant), we can design better estimators.
+
+\subsubsection{Bayes Estimators}
+Our optimality goal, given a measure $\Lambda$, is to find an estimator $\delta_\Lambda$ which minimizes the \textbf{average risk},
+\[
+r(\Lambda, \delta) = \int R(\theta, \delta) \, d\Lambda(\theta).
+\]
+If $\Lambda$ is a probability distribution on $\Omega$, we call $\Lambda$ the \textbf{prior} distribution. The estimator $\delta_\Lambda$, if it exists, is called the \textbf{Bayes estimator} with respect to $\Lambda$, and the minimized average risk $r(\Lambda, \delta_\Lambda)$ is called the \textbf{Bayes risk}.
+\begin{thm}[Bayes Estimators]
+Suppose $\Theta \sim \Lambda$, and $X | \Theta = \theta \sim P_\theta$. If
+\begin{enumerate}
+    \item there exists $\delta_0$ an estimator of $g(\theta)$ with finite risk for all $\theta$, and
+    \item there exists a value $\delta_\Lambda(x)$ that minimizes
+    \[
+    \mathbb{E}\left[L(\Theta, \delta_\Lambda(X)) \mid X = x\right] \quad \text{for almost every } x,
+    \]
+\end{enumerate}
+then $\delta_\Lambda$ is a Bayes estimator with respect to $\Lambda$.
+\end{thm}
+\begin{exam}
+Suppose that $X \sim \text{Bin}(n, \theta)$ given $\Theta = \theta$ and that $\Theta$ has prior distribution $\text{Beta}(a, b)$. The prior density is given by
+\[
+\pi(\theta) = \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)} \theta^{a-1} (1-\theta)^{b-1} \mathbb{I}(0 < \theta < 1)
+\]
+The \textbf{likelihood} (model density) is given by
+\[
+f(x \mid \theta) = \binom{n}{x} \theta^x (1-\theta)^{n-x}
+\]
+The marginal density is given by
+\[
+f(x) = \int f(x \mid \theta) \pi(\theta) \, d\theta.
+\]
+The posterior density may be calculated using Bayes rule which states that
+\[
+\text{posterior} = \frac{\text{joint}}{\text{marginal}} = \frac{\text{prior} \cdot \text{likelihood}}{\text{marginal}}.
+\]
+In our notation, the posterior density is given by the formula
+\begin{align*}
+\pi(\theta \mid x) &= \frac{\pi(\theta) f(x \mid \theta)}{f(x)} \\
+&= \frac{\pi(\theta) f(x \mid \theta)}{\int \pi(\theta') f(x \mid \theta') \, d\theta'}
+\end{align*}
+\begin{align*}
+\pi(\theta \mid x) &\propto \binom{n}{x} \theta^x (1-\theta)^{n-x} \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)} \theta^{a-1} (1-\theta)^{b-1} \\
+&\propto \theta^{x+a-1} (1-\theta)^{n-x+b-1} \sim \text{Beta}(x+a, n-x+b).
+\end{align*}
+Hence, the Bayes estimator of $\theta$ under the squared error loss is given by
+\[
+\mathbb{E}[\Theta \mid X = x] = \frac{x+a}{n+a+b}.
+\]
+This posterior mean may be expressed as
+\[
+\frac{X+a}{n+a+b} = \frac{n}{n+a+b} \left(\frac{X}{n}\right) + \frac{a+b}{n+a+b} \left(\frac{a}{a+b}\right).
+\]
+Hence, the Bayes estimate is a \textbf{convex combination} of the sample proportion $X/n$ (which is the UMVUE) and the prior mean $a/(a+b)$. Thus, the Bayes estimate modifies the sample estimate in light of prior information by \textbf{``shrinking'' the sample estimate towards the prior mean}. (This is a commonly recurring property of Bayes estimators.) In addition, as the sample size $n$ tends to infinity, the weight of the prior mean tends to zero, the empirical evidence increasingly outweighs the prior information, and the posterior mean becomes less distinguishable from the sample proportion.
+\end{exam}
+\begin{thm}[Unbiased Estimators]
+If $\delta$ is unbiased for $g(\theta)$ with $r(\Lambda, \delta) < \infty$ and $\mathbb{E}[g(\Theta)^2] < \infty$ then $\delta$ is not Bayes under squared error loss unless its average risk is zero, i.e.,
+\[
+\mathbb{E}[(\delta(X) - g(\Theta))^2] = 0,
+\]
+where the expectation is taken over $X$ and $\Theta$.
+\end{thm}
+
+\begin{exam}
+Let $X_1, \ldots, X_n \sim \mathcal{N}(\theta, \sigma^2)$, with $\sigma^2 > 0$ known. Is $\bar{X}$ Bayes under squared error for some choice of prior distribution? We know that, $\mathbb{E}(\bar{X} \mid \theta) = \theta$, i.e., $\bar{X}$ is an unbiased estimator of $\theta$. Further, we have that the average risk under squared error,
+\[
+\mathbb{E}[(\bar{X} - \Theta)^2] = \frac{\sigma^2}{n} \neq 0,
+\]
+which means that $\bar{X}$ is not the Bayes estimator under any prior distribution!
+\end{exam}
+
+\begin{defn}[Admissible]
+    We say a policy \(\delta\) is inadmissible if there exists a policy \(\delta^*\) s.t. for all \(\theta \in \mc{S}\), we have \(R(\theta,\delta^*)\leq R(\theta,\delta)\) and that \(\exists \theta \in \mc{S}\), the inequality holds strictly.
+\end{defn}
+
+\begin{thm}[Admissable]
+A unique Bayes estimator (a.s. for all $P_\theta$) is admissible.
+\end{thm}
+\begin{rem}[Why Consider Bayes Estimators]
+    So why consider Bayes estimators? (1) All admissible estimators are limits of Bayes estimators (Wald, 1949).
+    (2) Allow us to incorporate relevant prior information and experience into our estimators.
+    (3) A general method for generating reasonable estimators under various optimality criteria.
+\end{rem}
+
+\begin{rem}[How to Choose Priors]
+    \begin{enumerate}
+        \item \textit{Subjective.} If prior knowledge about or experience with a model parameter is available, we can incorporate this information into the prior choice.
+        \item \textit{Objective.} When no prior knowledge is available, we can choose a maximally noninformative or reference prior.
+    \end{enumerate}
+\end{rem}
+
+\subsubsection{Minimax Estimators}
+In minimax estimation, we collapse our risk function by looking at the worse-case risk. Given $X \sim \mathbb{P}_\theta$, where $\theta \in \Omega$, and a loss function $L(\theta, d)$, we want to find an estimator $\delta$ that minimizes the maximum risk:
+\[
+\sup_{\theta \in \Omega} R(\theta, \delta).
+\]
+Any such $\delta$ is called a \textbf{minimax} estimator.
+
+\begin{defn}
+We say that a prior $\Lambda$ is a \textbf{least favorable prior} if $r_\Lambda \geq r_{\Lambda'}$ for any other prior distribution $\Lambda'$.
+\[
+r_\Lambda = \inf_\delta r(\Lambda, \delta) = \inf_\delta \int_{\theta \in \Omega} R(\theta, \delta) \, d\Lambda(\theta).
+\]
+\end{defn}
+
+\begin{thm}[Relationship with Bayes Estimators]
+Suppose $\delta_\Lambda$ is Bayes for $\Lambda$ with
+\[
+r_{\Lambda \in \Omega} = \sup_\theta R(\theta, \delta_\Lambda)
+\]
+That is, the Bayes risk of $\delta_\Lambda$ is the maximum risk of $\delta_\Lambda$. Then,
+\begin{enumerate}
+    \item $\delta_\Lambda$ is minimax
+    \item $\Lambda$ is a least favorable prior
+    \item If $\delta_\Lambda$ is the unique Bayes estimator for $\Lambda$ (a.s.\ for all $P_\theta$), then it is the unique minimax estimator.
+\end{enumerate}
+\end{thm}
+
+\begin{cor}
+\label{cor:minimax}
+If a Bayes estimator $\delta_\Lambda$ has constant risk (that is, $R(\theta, \delta_\Lambda) = R(\theta', \delta_\Lambda)$ for all $\theta$ and $\theta'$), then $\delta_\Lambda$ is minimax. Note that this is a sufficient but not necessary condition.
+\end{cor}
+
+\begin{exam}
+    Suppose $X \sim \text{Binom}(n, \theta)$ for some $\theta \in (0,1)$ and that we use the squared error loss function. Is the sample proportion $\frac{X}{n}$ minimax? The risk of this estimator is
+\[
+R\left(\theta, \frac{X}{n}\right) = \frac{\theta(1-\theta)}{n}.
+\]
+The graph of $R\left(\theta, \frac{X}{n}\right)$ versus $\theta$ looks like the following:
+
+The risk has a unique maximum at $\theta = \frac{1}{2}$, so the worst-case risk is
+\[
+\sup_{\theta \in \Omega} R\left(\theta, \frac{X}{n}\right) = R\left(\frac{1}{2}, \frac{X}{n}\right) = \frac{1}{4n}.
+\]
+
+We can use the Corollary~\ref{cor:minimax} to find a minimax estimator and then compare the risk of the minimax estimator with that of $\frac{X}{n}$. To find a minimax estimator, we will search for a prior such that the Bayes estimator has constant risk.
+
+Recall the following useful fact. Under the prior distribution $\text{Beta}(a, b)$, the Bayes estimator under the squared error loss is
+\[
+\delta_{a,b}(X) = \frac{X + a}{n + a + b}.
+\]
+For any $a$ and $b$,
+\begin{align*}
+R(\theta, \delta_{a,b}) &= \mathbb{E}_\theta\left[\left(\frac{X + a}{n + a + b} - \theta\right)^2\right] \\
+&= \frac{1}{(n + a + b)^2} \mathbb{E}_\theta\left[(X + a - (n + a + b)\theta)^2\right] \\
+&= \frac{1}{(n + a + b)^2} \mathbb{E}_\theta\left[(X - n\theta - a(\theta - 1) - \theta b)^2\right] \\
+&= \frac{1}{(n + a + b)^2} \left(n\theta(1 - \theta) + (a(\theta - 1) + \theta b)^2\right).
+\end{align*}
+This is a quadratic function of $\theta$. To eliminate the $\theta$ dependence in $R(\theta, \delta_{a,b})$, we need the coefficients of the linear and quadratic terms to equal zero. The coefficient of $\theta^2$ is
+\[
+-n + (a + b)^2,
+\]
+so we need $a + b = \sqrt{n}$ (since $a, b > 0$). The coefficient of $\theta$ is
+\[
+n - 2a(a + b) = n - 2a\sqrt{n},
+\]
+so we need $a = b = \frac{\sqrt{n}}{2}$. With these choices of $a$ and $b$, the risk of $R(\theta, \delta_{a,b})$ is constant, which implies that $\text{Beta}\left(\frac{\sqrt{n}}{2}, \frac{\sqrt{n}}{2}\right)$ is a least favorable prior with constant risk. Then our Bayes estimator
+\[
+\delta_{\frac{\sqrt{n}}{2}, \frac{\sqrt{n}}{2}}(X) = \frac{X + \frac{\sqrt{n}}{2}}{n + \sqrt{n}},
+\]
+is minimax with constant risk of
+\[
+\frac{1}{4(\sqrt{n} + 1)^2}.
+\]
+Since the worst-case risk of $\frac{X}{n}$ is $\frac{1}{4n} > \frac{1}{4(\sqrt{n}+1)^2}$, we can conclude that $\frac{X}{n}$ is not minimax.
+\end{exam}
+
+\subsubsection{James Stein Estimator}
+\begin{exam}[James Stein Estimator]
+Let $X_1, X_2, \ldots, X_p$ be independent with $X_i \sim \mathcal{N}(\theta_i, \sigma^2)$ for $1 \leq i \leq p$. For the sake of simplicity, say $\sigma^2 = 1$. Now our goal is to estimate $\theta = (\theta_1, \theta_2, \ldots, \theta_p)$ under the loss function:
+\[
+L(\theta, d) = \sum_{i=1}^{p} (d_i - \theta_i)^2
+\]
+
+A natural estimator for $\theta$ is $X = (X_1, X_2, \ldots, X_p)$. It can be shown that $X$ is the UMRUE, the maximum likelihood estimator, a generalized Bayes estimator, and a minimax estimator for $\theta$. So, it would be natural to think that $X$ is admissible. However, counterintuitively, it turns out that this is not the case when $p \geq 3$.
+
+When $p \geq 3$, $X$ is dominated by the \textbf{James-Stein estimator} (and that too, strictly dominated):
+\[
+\delta(X) = (\delta_1(X), \delta_2(X), \ldots, \delta_p(X)) \text{ where}
+\]
+\[
+\delta_i(X) = \left(1 - \frac{p-2}{\|X\|_2^2}\right) X_i.
+\]
+It turns out that the James-Stein estimator is not itself admissible because it is dominated by the positive part James-Stein estimator
+\[
+\delta_i(X) = \max \left(
+1 - \frac{p-2}{\|X\|_2^2}, 0
+\right) X_i.
+\]
+\end{exam}
+\begin{rem}
+    Intuitively, the problem with the estimate $X$ is that $\|X\|_2^2$ is typically much larger than $\|\theta\|_2^2$:
+    \[
+    \mathbb{E}[\|X\|_2^2] = E\left[\sum_{i=1}^{p} X_j^2\right] = p + \sum_{i=1}^{p} \theta_i^2 = p + \|\theta\|_2^2
+    \]
+    where $p$ is actually $\sigma^2 p = p$ in this case. So, we may view the J-S estimator as a method for correcting the bias in the size of $X$. It achieves this by shrinking each coordinate of $X$ toward 0.
+    \begin{enumerate}
+    \item Suppose $\theta_i \stackrel{iid}{\sim} \mathcal{N}(0, A)$ then the Bayes estimator for $\theta_i$ is
+    \[
+    \delta_{A,i}(X) = \frac{X_i}{1 + \frac{1}{A}} = \left(1 - \frac{1}{A+1}\right) X_i
+    \]
+    
+    \item In this step we must choose $A$. Marginalizing over $\theta$, we see that $X$ has the distribution,
+    \[
+    X_i \stackrel{iid}{\sim} \mathcal{N}(0, A+1)
+    \]
+    We will use $X$ and the knowledge of this marginal distribution to find an estimate of $\frac{1}{A+1}$. One could, in principle, use any estimate of $A$, and it is common to use a maximum likelihood estimate, but here we will used an unbiased estimate.
+    
+    It can then be shown that
+    \[
+    \mathbb{E}\left[\frac{1}{\|X\|_2^2}\right] = \frac{1}{(p-2)(A+1)}
+    \]
+    ($\frac{1}{A+1}\|X\|_2^2$ follows a $\chi_n^2$ distribution). So
+    \[
+    1 - \frac{p-2}{\|X\|_2^2}
+    \]
+    must be UMVU for $1 - \frac{1}{A+1}$.
+    
+    If we plug this estimator into our Bayes estimator we obtain the J-S estimator:
+    \[
+    \delta(X_i) = \left(1 - \frac{p-2}{\|X\|_2^2}\right) X_i.
+    \]
+\end{enumerate}
+\end{rem}
+
+\subsubsection{How to Derive an Estimator}
+\begin{exam}[Moment Estimation]
+Let $X_1, \ldots, X_n$ be i.i.d.\ random variables from $P_\theta$, $\theta \in \Theta \subset \mathbb{R}^k$, and assume $\mathbb{E}|X_1|^k < \infty$.
+
+\begin{itemize}
+    \item Let $\mu_j = \mathbb{E} X_1^j$ be the $j$th moment of $P$ and then
+    \[
+    \hat{\mu}_j = \frac{1}{n} \sum_{i=1}^{n} X_i^j
+    \]
+    becomes the $j$th sample moment, which is an unbiased estimator of $\mu_j$, $j = 1, \ldots, k$.
+    
+    \item Typically,
+    \begin{equation}
+    \label{eq:moments}
+    \mu_j = h_j(\theta), \quad j = 1, \ldots, k
+    \end{equation}
+    for some functions $h_j$ on $\mathbb{R}^k$. By substituting $\mu_j$'s on the left-hand side of \eqref{eq:moments} by the sample moments $\hat{\mu}_j$, we obtain a moment estimator $\hat{\theta}$, i.e., $\hat{\theta}$ satisfies
+    \[
+    \hat{\mu}_j = h_j(\hat{\theta}), \quad j = 1, \ldots, k,
+    \]
+    which is a sample analogue of \eqref{eq:moments}. This method of deriving estimators is called the method of moments.
+    
+    \item Let $\hat{\mu} = (\hat{\mu}_1, \ldots, \hat{\mu}_k)$ and $h = (h_1, \ldots, h_k)$. Then $\hat{\mu} = h(\hat{\theta})$. If the inverse function $h^{-1}$ exists, then the unique moment estimator of $\theta$ is $\hat{\theta} = h^{-1}(\hat{\mu})$.
+    
+    \item When $h^{-1}$ does not exist (i.e., $h$ is not one-to-one), any solution of $\hat{\mu} = h(\hat{\theta})$ is a moment estimator of $\theta$. If possible, we always choose a solution $\hat{\theta}$ in the parameter space $\Theta$. In some cases, however, a moment estimator may not exist.
+\end{itemize}
+\end{exam}
+
+\begin{exam}[Maximum Likelihood Estimation]
+Let $X \in \mathcal{X}$ be a sample with a PDF $f_{\boldsymbol{\theta}}$ w.r.t.\ a $\sigma$-finite measure, where $\boldsymbol{\theta} \in \Theta \subset \mathbb{R}^k$.
+
+\begin{itemize}
+    \item For each $x \in \mathcal{X}$, $f_{\boldsymbol{\theta}}(x)$ considered as a function of $\boldsymbol{\theta}$ is called the likelihood function and denoted by $\ell(\theta)$.
+    
+    \item Let $\bar{\Theta}$ be the closure of $\Theta$. A $\hat{\theta} \in \bar{\Theta}$ satisfying $\ell(\hat{\theta}) = \max_{\theta \in \bar{\Theta}} \ell(\theta)$ is called a maximum likelihood estimate (MLE) of $\theta$. If $\hat{\theta}$ is a measurable function of $X$, then $\hat{\theta}$ is called a maximum likelihood estimator (MLE) of $\theta$.
+\end{itemize}
+\end{exam}
+
+\subsection{Large Sample Theory}
+\subsubsection{Delta Method}
+\begin{thm}[Delta Method]
+Let $r_n \to \infty$ and $\phi: \mathbb{R}^d \to \mathbb{R}^k$ be differentiable at $\theta$ and assume that $r_n(T_n - \theta) \xrightarrow{d} T$ for some random vector $T$. Then
+\begin{enumerate}
+    \item $r_n(\phi(T_n) - \phi(\theta))$ converges in distribution to $\phi'(\theta) T$
+    \item $r_n(\phi(T_n) - \phi(\theta)) - r_n \phi'(\theta)(T_n - \theta)$ converges in probability to $0$
+\end{enumerate}
+Here $\phi'(\theta) \in \mathbb{R}^{k \times d}$ is the Jacobian Matrix $[\phi'(\theta)]_{ij} = \frac{\partial \phi_i(\theta)}{\partial \theta_j}$.
+\end{thm}
+
+\begin{proof}
+By the definition of the derivative, we have that
+\[
+\phi(t) = \phi(\theta) + \phi'(\theta)(t - \theta) + o(\|t - \theta\|),
+\]
+i.e.
+\begin{equation}\label{eq:taylor}
+\phi(t) = \phi(\theta) + \phi'(\theta)(t - \theta) + R(\|t - \theta\|)
+\end{equation}
+where $\lim_{h \to 0} \frac{R(h)}{h} = 0$. Since $r_n(T_n - \theta)$ converges in distribution, we know that $r_n(T_n - \theta) = O_p(1)$, which implies that $r_n \|T_n - \theta\| = O_p(1)$. We also have that $\|T_n - \theta\| = o_p(1)$, which implies $R(\|T_n - \theta\|) = o_p(\|T_n - \theta\|)$. Thus
+\[
+r_n R(\|T_n - \theta\|) = r_n o_p(\|T_n - \theta\|) = o_p(r_n \|T_n - \theta\|) = o_p(O_p(1)) = o_p(1).
+\]
+Using this along with \eqref{eq:taylor}, we have the second part of the theorem. Noting that $r_n \phi'(\theta)(T_n - \theta) \xrightarrow{d} \phi'(\theta) T$, and applying Slutsky's theorem, we get the first part as well.
+\end{proof}
+
+\begin{thm}[Second Order Delta Method]
+Let $\phi: \mathbb{R}^d \to \mathbb{R}$ be twice differentiable at $\theta$, and $r_n(T_n - \theta) \xrightarrow{d} T$. Then if $\boldsymbol{\nabla} \phi(\theta) = 0$, we have
+\[
+r_n^2(\phi(T_n) - \phi(\theta)) \xrightarrow{d} \frac{1}{2} T^\top \boldsymbol{\nabla}^2 \phi(\theta) T.
+\]
+\end{thm}
+
+\begin{proof}
+By definition,
+\[
+\phi(t) = \phi(\theta) + \boldsymbol{\nabla} \phi(\theta)^\top (t - \theta) + \frac{1}{2}(t - \theta)^\top \boldsymbol{\nabla}^2 \phi(\theta)(t - \theta) + R(\|t - \theta\|),
+\]
+where $R(h) = o(\|h\|^2)$. Since $\boldsymbol{\nabla} \phi(\theta) = 0$, we actually have
+\begin{equation}\label{eq:taylor2}
+\phi(t) = \phi(\theta) + \frac{1}{2}(t - \theta)^\top \boldsymbol{\nabla}^2 \phi(\theta)(t - \theta) + R(\|t - \theta\|).
+\end{equation}
+Note $r_n^2 R(\|T_n - \theta\|) = r_n^2 o_p(\|T_n - \theta\|^2) = o_p(\|r_n(T_n - \theta)\|^2)$. Since $r_n(T_n - \theta)$ converges in distribution, so does $\|r_n(T_n - \theta)\|^2$, and so $\|r_n(T_n - \theta)\|^2 = O_p(1)$. Thus
+\begin{equation}\label{eq:remainder}
+r_n^2 R(\|T_n - \theta\|) = o_p(O_p(1)) = o_p(1).
+\end{equation}
+Now by the continuous mapping theorem, we have that
+\begin{equation}\label{eq:cmt}
+\frac{1}{2}(r_n(T_n - \theta))^\top \boldsymbol{\nabla}^2 \phi(\theta)(r_n(T_n - \theta)) \xrightarrow{d} \frac{1}{2} T^\top \boldsymbol{\nabla}^2 \phi(\theta) T.
+\end{equation}
+So combining \eqref{eq:taylor2}, \eqref{eq:remainder}, \eqref{eq:cmt} and using Slutsky's lemma, we get the desired convergence in distribution.
+\end{proof}
+\begin{exam}
+    Suppose $\theta \in (0,1)$, $X_i \sim \text{Bernoulli}(\theta)$. To estimate $\theta$, we may use the sample mean $\hat{\theta}_n = n^{-1}\sum_{i=1}^n X_i$. Clearly, $\mathbb{E}\hat{\theta}_n = \theta$, $\text{Var}(\hat{\theta}_n) = \frac{\theta(1-\theta)}{n}$, $\big[\sqrt{n}(\hat{\theta}_n - \theta)\big]^2 \xrightarrow{d} \theta(1-\theta)\cdot \chi_{(1)}^2$. 
+Instead of using mean squared error to measure the performance of $\hat{\theta}_n$, 
+let us use the Kullback-Leibler (KL) divergence (or the log loss). This is
+\[
+  D_{KL}(P \,\|\, Q) = \int dP \log\!\left(\frac{dP}{dQ}\right).
+\]
+Let $P_t = \text{Bernoulli}(t)$, $t \in [0,1]$. So
+\[
+  D_{KL}(P_t \,\|\, P_\theta) = t\log\frac{t}{\theta} + (1-t)\log\frac{1-t}{1-\theta}.
+\]
+Let $\phi(t) = D_{KL}(P_t \,\|\, P_\theta)$. Then
+\[
+  \phi'(t) = \log\frac{t}{1-t} - \log\frac{\theta}{1-\theta}.
+\]
+Note $\phi'(\theta) = 0$. So we need the second derivative:
+\[
+  \phi''(t) = \frac{1}{t} + \frac{1}{1-t} = \frac{1}{t(1-t)},
+\]
+and so $\phi''(\theta) = \frac{1}{\theta(1-\theta)}$. So by the second order Delta Method,
+\[
+  n D_{KL}(P_{\hat{\theta}_n} \,\|\, P_\theta) \xrightarrow{d} \frac{1}{2}\chi^2_{(1)}.
+\]
+\end{exam}
+
+\subsubsection{Fisher Information}
+\begin{defn}[Operator norm]
+$\|A\|_{\mathrm{op}} := \sup_{\|u\|_2 \le 1}\|Au\|_2$.
+
+\textit{Note:} $A \in \mathbb{R}^{k\times d}$, $u \in \mathbb{R}^d$ and 
+$\|Ax\|_2 \le \|A\|_{\mathrm{op}}\|x\|_2$.
+\end{defn}
+
+Before we do anything, we have to make several assumptions.
+\begin{enumerate}
+  \item We have a ``nice, smooth'' model, i.e.\ the Hessian is Lipschitz-continuous. 
+  To be rigorous, the following must hold:
+  \[
+    \big\|\nabla^2 \ell_{\theta_1}(x) - \nabla^2 \ell_{\theta_2}(x)\big\|_{\mathrm{op}} 
+    \le M(x)\,\|\theta_1 - \theta_2\|_2
+    \qquad \mathbb{E}_\theta[M^2(x)] < \infty
+  \]
+
+  \item The MLE, $\hat{\theta}_n \in \arg\max_{\theta \in \Theta} P_n \ell_\theta(x)$, 
+  is consistent, i.e.\ $\hat{\theta}_n \xrightarrow{p} \theta_0$ under $P_{\theta_0}$.
+
+  \item $\Theta$ is a convex set.
+\end{enumerate}
+
+\begin{thm}[Fisher Information]
+Let $x_i \stackrel{\mathrm{iid}}{\sim} P_{\theta_0}$, $\hat{\theta}_n$ be the MLE 
+(i.e.\ $\nabla P_n \ell_{\hat{\theta}_n} = 0$) and assume the conditions stated above. 
+Then,
+\[
+  \sqrt{n}(\hat{\theta}_n - \theta_0) \xrightarrow{d} 
+  \mathsf{N}\!\left(0,\, (P_{\theta_0}\nabla^2 \ell_{\theta_0})^{-1} 
+  P_{\theta_0}\nabla \ell_{\theta_0}\nabla \ell_{\theta_0}^\top\, 
+  (P_{\theta_0}\nabla^2 \ell_{\theta_0})^{-1}\right).
+\]
+\end{thm}
+
+\begin{rem}
+Let us rewrite the asymptotic variance. Given that 
+$\nabla^2 \ell_\theta = \nabla\!\left(\dfrac{\nabla p_\theta}{p_\theta}\right) 
+= \dfrac{\nabla^2 p_\theta}{p_\theta} - \dfrac{\nabla p_\theta \nabla p_\theta^\top}{p_\theta^2}$:
+\[
+  \mathbb{E}_\theta\!\left[\frac{\nabla^2 p_\theta}{p_\theta}\right] 
+  = \int \frac{\nabla^2 p_\theta}{p_\theta}\, p_\theta\, d\mu 
+  = \int \nabla^2 p_\theta\, d\mu 
+  = \nabla^2 \int p_\theta\, d\mu = 0.
+\]
+
+As a result:
+\[
+  \mathbb{E}_\theta[\nabla^2 \ell_\theta] 
+  = -\mathbb{E}_\theta\!\left[\left(\frac{\nabla p_\theta}{p_\theta}\right)
+  \!\left(\frac{\nabla p_\theta}{p_\theta}\right)^{\!T}\right] 
+  = -\operatorname*{Cov}_\theta(\nabla \ell_\theta(x)).
+\]
+
+We define the \textbf{Fisher Information} as 
+$I_\theta := \mathbb{E}_\theta[\nabla \ell_\theta(x)\nabla \ell_\theta(x)^\top] 
+= \operatorname*{Cov}_\theta \nabla \ell_\theta$, where the final equality holds 
+because $\mathbb{E}_\theta[\nabla \ell_\theta(x)] = 0$ ($\theta$ maximizes 
+$\mathbb{E}_\theta[\ell_\theta(x)]$). To show this, assume that we can swap 
+$\nabla, \mathbb{E}$. Then, $\nabla \ell_\theta(x) = \nabla \log p_\theta(x) 
+= \dfrac{\nabla p_\theta(x)}{p_\theta(x)}$. Using that result, we see that:
+\[
+  \mathbb{E}_\theta[\nabla \ell_\theta] 
+  = \mathbb{E}\!\left[\frac{\nabla p_\theta}{p_\theta}\right] 
+  = \int \frac{\nabla p_\theta}{p_\theta}\, p_\theta\, d\mu 
+  = \int \nabla p_\theta\, d\mu 
+  = \nabla \int p_\theta\, d\mu 
+  = \nabla(1) = 0.
+\]
+
+We now have a more compact representation of the asymptotic distribution described 
+in the Theorem above.
+\[
+  \sqrt{n}(\hat{\theta}_n - \theta_0) \xrightarrow{d} 
+  \mathsf{N}(0,\, I_{\theta_0}^{-1} I_{\theta_0} I_{\theta_0}^{-1}) 
+  = \mathsf{N}(0,\, I_{\theta_0}^{-1}).
+\]
+
+Consider $I_\theta = -\nabla^2 \mathbb{E}[\ell_\theta(x)]$. If the magnitude of the 
+second derivative is ``large,'' that implies that the log-likelihood is steep around 
+the global maximum (making it ``easy'' to find). Alternatively, if the magnitude of 
+$-\nabla^2 \mathbb{E}[\ell_\theta(x)]$ is ``small,'' we do not have sufficient 
+curvature to find the optimal $\theta$.
+\end{rem}
+
+\begin{thm}[Cramer-Rao]
+Let $g(\theta) = \mathbb{E}_\theta[\delta] \in \mathbb{R}$ and 
+$I_\theta = \mathbb{E}_\theta[\nabla \ell_\theta (\nabla \ell_\theta)^\top] \succ 0$, then
+\[
+  \mathrm{Var}_\theta(\delta) \ge \nabla g(\theta)^\top I_\theta^{-1} \nabla g(\theta).
+\]
+\end{thm}
+
+\begin{proof}
+Set $\Psi(x) = \nabla_\theta \ell_\theta(x)$, we have that $\mathbb{E}_\theta[\Psi] = 0$, 
+and that
+\begin{align*}
+  \mathbb{E}[(\delta - g(\theta))\Psi] 
+  &= \mathbb{E}[\delta \Psi] \\
+  &= \mathbb{E}[\delta \nabla \ell_\theta] \\
+  &= \mathbb{E}\!\left[\delta \frac{\nabla p_\theta}{p_\theta}\right] \\
+  &= \int \delta \nabla p_\theta\, d\mu(x).
+\end{align*}
+
+\textit{Under good regularity conditions, we have that}
+\[
+  \mathbb{E}[(\delta - g(\theta))\Psi] 
+  = \nabla \int \delta(x) p_\theta(x)\, d\mu(x) 
+  = \nabla g(\theta).
+\]
+
+\textit{We take}
+\[
+  \gamma = \nabla g(\theta), \quad C = I_\theta
+\]
+\textit{to get the desired result.}
+\end{proof}
+
+\begin{cor}[Cramer-Rao]
+If $\hat{\theta} : \mathcal{X} \to \Theta$ is unbiased, then
+\[
+  \mathbb{E}\!\left[\|\hat{\theta} - \theta\|_2^2\right] \ge \mathrm{tr}(I_\theta^{-1})
+\]
+and
+\[
+  \mathbb{E}[(\hat{\theta} - \theta)(\hat{\theta} - \theta)^\top] \succeq I_\theta^{-1}.
+\]
+\end{cor}
+
+\begin{proof}
+Take
+\begin{align*}
+  g(\theta) &= v^\top \theta \\
+  \delta &= v^\top \hat{\theta}(X).
+\end{align*}
+Applying the Cramer-Rao theorem,
+\[
+  \mathbb{E}\!\left[(v^\top(\hat{\theta} - \theta))^2\right] \ge v^\top I_\theta^{-1} v
+\]
+and
+\[
+  \mathbb{E}\!\left[(v^\top(\hat{\theta} - \theta))^2\right] 
+  = \mathbb{E}\!\left[\mathrm{tr}\!\left((\hat{\theta} - \theta)(\hat{\theta} - \theta)^\top v v^\top\right)\right] 
+  = v^\top \mathrm{Cov}(\hat{\theta})\, v.
+\]
+\end{proof}
+
+\begin{rem}
+    Proof does not give much intuition. The real theorem is Le Cam and Hajek’s local asymptotic minimax theorem (discuss later).
+\end{rem}

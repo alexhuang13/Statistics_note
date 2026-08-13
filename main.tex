@@ -4,10 +4,19 @@
 \usepackage{wasysym}
 \usepackage{float}
 \usepackage{mathrsfs}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{mathrsfs}
+
 
 \geometry{tmargin=1.25in, bmargin=1.25in, lmargin=1.25in, rmargin = 1.25in}
 \newcommand{\todo}{\textcolor{pink}{TODO}}
 
+
+\newcommand{\indep}{\perp\!\!\!\perp}
 \newcommand{\dd}{\mathop{}\!\mathrm{d}}
 \newcommand{\EE}{\mathbb{E}}
 \newcommand{\RR}{\mathbb{R}}
@@ -36,6 +45,20 @@
 \newcommand{\ii}{\mathrm{i}}
 \newcommand{\sgn}{\operatorname{sgn}}
 \newcommand{\softmax}{\operatorname{Softmax}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bY}{\mathbf{Y}}
+\newcommand{\bI}{\mathbf{I}}
+\newcommand{\bV}{\mathbf{V}}
+\newcommand{\bv}{\mathbf{v}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\hbbeta}{\hat{\boldsymbol{\beta}}}
+\newcommand{\bvarepsilon}{\boldsymbol{\varepsilon}}
+\newcommand{\bzero}{\mathbf{0}}
+\newcommand{\bSigma}{\boldsymbol{\Sigma}}
+\newcommand{\cH}{\mathcal{H}}
+\newcommand{\cT}{\mathcal{T}}
+
 
 \newtheorem{thm}{Theorem}[section] 
 \newtheorem{defn}[thm]{Definition} 
@@ -54,7 +77,7 @@
 }
 \renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
 
-\title{A Guided Tour of Statistics}
+\title{A Guided Tour of Modern Statistics}
 \author{Zixun Huang}
 \begin{document}
 
@@ -64,29 +87,22 @@
 \vspace{.25in}
 
 \newpage
-% \part{Chapter 1: Classic Theory}
+\part{Chapter 1: Classical Theory}
 \input{Lecture0}
 \input{Lecture1}
-% \input{Lecture2}
-% \input{Lecture4}
-% \input{Lecture5}
-% \input{Lecture6}
-% \newpage
-% \part{Chapter 2: High-Dimensional Statistics}
-% \input{Lecture7}
-% \input{Lecture8}
-% \input{Lecture9}
+\input{Lecture2}
+\input{Lecture3}
+\newpage
+\part{Chapter 2: High-Dimensional Statistics}
+\input{Lecture4}
+\input{Lecture5}
+\input{Lecture6}
+\input{Lecture7}
+\newpage
+\part{Chapter 3: Other Topics in Statistics}
+\input{Lecture9}
 \input{Lecture10}
-% \newpage
-% \part{Chapter 3: Computational Statistics}
-% \input{Lecture15}
-% \input{Lecture16}
-% \input{Lecture22}
-% \newpage
-% \part{Chapter 4: Other Topics of Statistics}
-% \input{Lecture12}
-% \input{Lecture13}
-% \input{Lecture21}
+
 
 \newpage
 \bibliographystyle{plain}
