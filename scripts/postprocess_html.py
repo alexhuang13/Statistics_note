@@ -12,7 +12,63 @@ from html.parser import HTMLParser
 
 RAW = Path(sys.argv[1])
 OUT = Path(sys.argv[2])
-ASSETS = Path(__file__).resolve().parents[1] / "web" / "assets"
+ROOT = Path(__file__).resolve().parents[1]
+ASSETS = ROOT / "web" / "assets"
+
+
+def parse_simple_macros(tex_path: Path) -> dict[str, str]:
+    """Read all zero-argument \newcommand definitions from main.tex."""
+    source = tex_path.read_text(encoding="utf-8")
+    macros: dict[str, str] = {}
+    for match in re.finditer(r"\\(?:re)?newcommand\s*\{\\([A-Za-z]+)\}\s*\{", source):
+        name = match.group(1)
+        cursor = match.end()
+        depth = 1
+        while cursor < len(source) and depth:
+            if source[cursor] == "\\":
+                cursor += 2
+                continue
+            if source[cursor] == "{": depth += 1
+            elif source[cursor] == "}": depth -= 1
+            cursor += 1
+        if depth == 0:
+            macros[name] = source[match.end():cursor-1]
+    return macros
+
+CUSTOM_MACROS = parse_simple_macros(ROOT / "main.tex")
+# MathJax compatibility expansions for commands supplied by PDF-only packages.
+CUSTOM_MACROS.update({
+    "mathbbm": r"\mathbb",
+    "qedhere": r"\qquad\square",
+    "oiint": r"\mathop{\oint\!\!\oint}",
+})
+# These aliases intentionally pass the following brace group to the expanded
+# command, so surrounding the replacement with an extra group would be wrong.
+PREFIX_MACROS = {"mc", "mathbbm"}
+
+def expand_math_macros(tex: str) -> str:
+    """Recursively expand simple project macros to standard MathJax TeX."""
+    for _ in range(12):
+        changed = False
+        for name in sorted(CUSTOM_MACROS, key=len, reverse=True):
+            pattern = re.compile(r"\\" + re.escape(name) + r"(?![A-Za-z])")
+            replacement = CUSTOM_MACROS[name]
+            if name in PREFIX_MACROS:
+                tex, count = pattern.subn(lambda _m, body=replacement: body, tex)
+            else:
+                tex, count = pattern.subn(lambda _m, body=replacement: "{" + body + "}", tex)
+            changed = changed or bool(count)
+        if not changed:
+            break
+    # TeX4ht can leave a few document-only commands in math strings.
+    tex = re.sub(r"\\label\s*\{[^{}]*\}", "", tex)
+    tex = re.sub(r"\\ref\s*\{([^{}]*)\}", lambda m: m.group(1), tex)
+    tex = re.sub(r"\\title\s*\{([^{}]*)\}", lambda m: r"\widetilde{" + m.group(1) + "}", tex)
+    return tex
+
+def expand_math_in_html(fragment: str) -> str:
+    pattern = re.compile(r"(<(?:span|div) class='mathjax-(?:inline|block|env[^']*)'[^>]*>)(.*?)(</(?:span|div)>)", re.S)
+    return pattern.sub(lambda m: m.group(1) + expand_math_macros(m.group(2)) + m.group(3), fragment)
 
 @dataclass
 class NavItem:
@@ -152,7 +208,7 @@ def transform_content(fragment: str) -> str:
     fragment = fragment.replace("class='SourceSans3-Regular-tlf-t1-'", "class='web-sans'")
     fragment = re.sub(r"class='zpl-(Bold|Italic|Regular)[^']*'", lambda m: "class='web-bold'" if m.group(1)=="Bold" else ("class='web-italic'" if m.group(1)=="Italic" else "class='web-serif'"), fragment)
     fragment = fragment.replace("__________________________________________________", "").replace("_____", "")
-    return fragment
+    return expand_math_in_html(fragment)
 
 def nav_html(items: list[NavItem], current: str, prefix="") -> str:
     chunks = []
