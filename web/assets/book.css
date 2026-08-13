@@ -573,3 +573,22 @@ body:has(.landing) .header-actions {
   .part-card h2 { font-size: 21px; }
   .part-card a { font-size: 17px; }
 }
+
+
+/* Minimal cover requested: title and primary actions only */
+.landing h1 {
+  font-size: clamp(32px, 2.8vw, 41px);
+  line-height: 1.18;
+}
+.landing-actions {
+  margin-top: 17px;
+}
+.landing-hero {
+  padding-bottom: 18px;
+}
+@media (max-width: 840px) {
+  .landing h1 { font-size: 33px; }
+}
+@media (max-width: 560px) {
+  .landing h1 { font-size: 30px; line-height: 1.2; }
+}

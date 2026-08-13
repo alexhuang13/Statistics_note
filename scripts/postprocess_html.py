@@ -344,11 +344,8 @@ first_url = flat_pages[0].url if flat_pages else "notes.pdf"
 landing_body = f"""
 <div class='landing'>
 <section class='landing-hero'><div class='landing-hero-inner'>
-  <div class='landing-eyebrow'>Zixun Huang · Lecture Notes</div>
   <h1>A Guided Tour of Modern Statistics</h1>
-  <p class='landing-subtitle'>A structured journey from classical probability and statistical theory to high-dimensional methods, random matrices, computation, and learning theory.</p>
   <div class='landing-actions'><a class='primary-action' href='{html.escape(first_url)}'>Start reading →</a><button class='secondary-action' data-search-open>Search the notes</button><a class='secondary-action' href='notes.pdf'>Download PDF</a></div>
-  <div class='landing-meta'><span><strong>{sum(1 for p in parts for s in p.children if s.number)}</strong>chapters</span><span><strong>{sum(len(s.children) for p in parts for s in p.children)}</strong>topics</span><span><strong>132</strong>PDF pages</span><span><strong>Auto</strong>updated from GitHub</span></div>
 </div></section>
 <section class='landing-content'><h2 class='landing-section-title'>Explore the notes</h2><div class='part-grid'>{''.join(part_cards)}</div></section>
 <footer class='landing-footer'>Built automatically from the LaTeX source. The online text and PDF update with every push to <code>main</code>.</footer>
