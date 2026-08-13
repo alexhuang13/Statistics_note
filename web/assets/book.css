@@ -381,3 +381,195 @@ table { max-width: 100%; border-collapse: collapse; }
   font-size: 1.04em;
   font-weight: 600;
 }
+
+/* Landing page: match the compact academic rhythm of alexhuang13.github.io */
+body:has(.landing) {
+  font-family: "Trebuchet MS", "KaiTi", "楷体", "STKaiti", "华文楷体", Arial, sans-serif;
+  font-size: 20px;
+  line-height: 1.5;
+}
+body:has(.landing) .site-header {
+  grid-template-columns: 260px minmax(0, 1fr) auto;
+}
+body:has(.landing) .brand {
+  padding-left: clamp(24px, 4.45vw, 64px);
+  font-size: 18px;
+}
+body:has(.landing) .header-context {
+  padding-left: 28px;
+  font-size: 17px;
+}
+body:has(.landing) .header-actions {
+  padding-right: clamp(24px, 4.45vw, 64px);
+}
+.landing {
+  padding-top: var(--header-h);
+}
+.landing-hero {
+  padding: 34px clamp(24px, 4.45vw, 64px) 24px;
+  border-bottom: 0;
+}
+.landing-hero-inner {
+  max-width: 1432px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.landing-eyebrow {
+  margin: 0 0 7px;
+  color: var(--sienna-ink);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: .035em;
+  text-transform: none;
+}
+.landing h1 {
+  max-width: none;
+  margin: 0;
+  color: var(--ink);
+  font-family: "Trebuchet MS", "KaiTi", "楷体", Arial, sans-serif;
+  font-size: clamp(38px, 3.5vw, 50px);
+  font-weight: 700;
+  line-height: 1.14;
+  letter-spacing: -.025em;
+}
+.landing-subtitle {
+  max-width: 970px;
+  margin: 12px 0 0;
+  color: var(--ink-soft);
+  font-family: "Trebuchet MS", "KaiTi", "楷体", Arial, sans-serif;
+  font-size: 20px;
+  line-height: 1.6;
+}
+.landing-actions {
+  gap: 10px;
+  margin-top: 20px;
+}
+.primary-action,
+.secondary-action {
+  min-height: 41px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+}
+.landing-meta {
+  gap: 12px;
+  margin-top: 20px;
+  color: var(--muted);
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.landing-meta span {
+  min-width: 118px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.landing-meta strong {
+  display: inline;
+  margin-right: 5px;
+  color: var(--ink);
+  font-size: 19px;
+  line-height: inherit;
+}
+.landing-content {
+  max-width: 1432px;
+  margin: 0 auto;
+  padding: 4px clamp(24px, 4.45vw, 64px) 64px;
+}
+.landing-content::before {
+  display: block;
+  height: 1px;
+  margin: 0 20px 18px;
+  background: var(--line);
+  content: "";
+}
+.landing-section-title {
+  margin: 0 20px 10px;
+  color: var(--ink);
+  font-family: "Trebuchet MS", "KaiTi", "楷体", Arial, sans-serif;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -.015em;
+}
+.part-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 0 20px;
+}
+.part-card {
+  padding: 14px 16px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(32, 29, 24, .035);
+}
+.part-card-number {
+  color: var(--sienna-ink);
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.part-card h2 {
+  margin: 3px 0 8px;
+  color: var(--ink);
+  font-family: "Trebuchet MS", "KaiTi", "楷体", Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -.01em;
+}
+.part-card li {
+  margin: 4px 0;
+}
+.part-card a {
+  color: var(--ink-soft);
+  font-family: "Trebuchet MS", "KaiTi", "楷体", Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
+}
+.landing-footer {
+  max-width: 1432px;
+  margin: 0 auto;
+  padding: 28px 64px 38px;
+  color: var(--muted);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-style: italic;
+  line-height: 1.7;
+}
+
+@media (max-width: 840px) {
+  body:has(.landing) .site-header { grid-template-columns: 50px minmax(0, 1fr) 88px; }
+  body:has(.landing) .brand { padding-left: 12px; }
+  body:has(.landing) .header-context { padding-left: 8px; font-size: 14px; }
+  body:has(.landing) .header-actions { padding-right: 8px; }
+  .landing-hero { padding: 24px 4px 18px; }
+  .landing-hero-inner { padding: 20px; }
+  .landing h1 { font-size: 38px; line-height: 1.16; }
+  .landing-subtitle { font-size: 19px; line-height: 1.55; }
+  .landing-content { padding: 0 4px 48px; }
+  .part-grid { grid-template-columns: 1fr; }
+  .landing-footer { padding: 26px 24px 34px; font-size: 17px; }
+}
+
+@media (max-width: 560px) {
+  body:has(.landing) { font-size: 18px; }
+  .landing h1 { font-size: 35px; overflow-wrap: normal; }
+  .landing-eyebrow { font-size: 14px; }
+  .landing-subtitle { font-size: 18px; line-height: 1.55; }
+  .landing-actions { margin-top: 18px; }
+  .landing-meta { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .landing-meta span { min-width: 0; padding: 9px 10px; }
+  .landing-meta strong { display: block; margin-right: 0; font-size: 19px; }
+  .landing-section-title { font-size: 25px; }
+  .part-card h2 { font-size: 21px; }
+  .part-card a { font-size: 17px; }
+}
