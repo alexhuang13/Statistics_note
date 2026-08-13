@@ -1,5 +1,5 @@
-\documentclass[10pt, oneside]{article} 
-\usepackage{amsmath, amsthm, amssymb, calrsfs, wasysym, verbatim, bbm, color, geometry, hyperref, tocloft, xcolor}
+\documentclass[10pt, oneside]{article}
+\usepackage{amsmath, amsthm, amssymb, calrsfs, wasysym, verbatim, bbm, hyperref}
 \usepackage{graphicx}
 \usepackage{wasysym}
 \usepackage{float}
@@ -10,9 +10,7 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{mathrsfs}
-
-
-\geometry{tmargin=1.25in, bmargin=1.25in, lmargin=1.25in, rmargin = 1.25in}
+\usepackage{statistics-note-style}
 \newcommand{\todo}{\textcolor{pink}{TODO}}
 
 
@@ -60,6 +58,10 @@
 \newcommand{\cT}{\mathcal{T}}
 
 
+\newtheoremstyle{notestyle}%
+  {7pt}{7pt}{\normalfont}{}%
+  {\sffamily\bfseries\color{Ink}}{.}{0.55em}{}%
+\theoremstyle{notestyle}
 \newtheorem{thm}{Theorem}[section] 
 \newtheorem{defn}[thm]{Definition} 
 \newtheorem{conv}[thm]{Convention} 
@@ -71,11 +73,6 @@
 \newtheorem{appr}[thm]{Approach}
 \newtheorem{obs}[thm]{Observation}
 
-\hypersetup{
-    colorlinks=true,
-    linkcolor=blue
-}
-\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
 
 \title{A Guided Tour of Modern Statistics}
 \author{Zixun Huang}

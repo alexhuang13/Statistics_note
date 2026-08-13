@@ -1,0 +1,232 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{statistics-note-style}[2026/08/13 Warm editorial style for the statistics notes]
+
+% Typography and page rhythm
+\RequirePackage[T1]{fontenc}
+\RequirePackage{newpxtext}
+\RequirePackage[semibold]{sourcesanspro}
+\RequirePackage{microtype}
+\RequirePackage{geometry}
+\RequirePackage{setspace}
+\RequirePackage{ragged2e}
+\RequirePackage{titlesec}
+\RequirePackage{fancyhdr}
+\RequirePackage{enumitem}
+\RequirePackage{booktabs}
+\RequirePackage{array}
+\RequirePackage{colortbl}
+\RequirePackage{caption}
+\RequirePackage{tocloft}
+\RequirePackage{xcolor}
+\RequirePackage{xurl}
+\RequirePackage[most]{tcolorbox}
+
+\geometry{
+  top=1.02in,
+  bottom=1.05in,
+  inner=1.12in,
+  outer=1.12in,
+  headheight=20pt,
+  headsep=0.28in,
+  footskip=0.45in
+}
+\setstretch{1.055}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.46em plus 0.12em minus 0.08em}
+\setlength{\emergencystretch}{2em}
+\raggedbottom
+
+% Palette adapted from alexhuang13.github.io
+\definecolor{Paper}{HTML}{FAF9F6}
+\definecolor{Surface}{HTML}{FDFCFA}
+\definecolor{Ink}{HTML}{201D18}
+\definecolor{InkSoft}{HTML}{4A463F}
+\definecolor{Muted}{HTML}{6F6A61}
+\definecolor{Faint}{HTML}{8D887E}
+\definecolor{Line}{HTML}{E6E2D8}
+\definecolor{LineSoft}{HTML}{EFECE4}
+\definecolor{Accent}{HTML}{2A78D6}
+\definecolor{AccentInk}{HTML}{1C5CAB}
+\definecolor{AccentWash}{HTML}{EAF1FB}
+\definecolor{Sienna}{HTML}{BD5F16}
+\definecolor{SiennaInk}{HTML}{9A4A0B}
+\definecolor{SiennaWash}{HTML}{F9EFE3}
+\pagecolor{Paper}
+\color{InkSoft}
+
+% Links
+\AtBeginDocument{%
+  \hypersetup{
+    colorlinks=true,
+    linkcolor=AccentInk,
+    citecolor=SiennaInk,
+    urlcolor=AccentInk,
+    pdfborder={0 0 0},
+    bookmarksnumbered=true,
+    bookmarksopen=true
+  }%
+}
+\urlstyle{same}
+
+% Headings: clean sans-serif hierarchy with restrained rules
+\titleformat{\part}[display]
+  {\thispagestyle{empty}\centering\sffamily\color{Ink}}
+  {\color{SiennaInk}\fontsize{11}{13}\selectfont\bfseries\MakeUppercase{Part \thepart}}
+  {0.7em}
+  {\fontsize{29}{34}\selectfont\bfseries}
+  [\vspace{0.7em}{\color{Line}\rule{0.52\textwidth}{0.8pt}}]
+\titlespacing*{\part}{0pt}{0.29\textheight}{0pt}
+
+\titleformat{\section}
+  {\sffamily\fontsize{20}{24}\selectfont\bfseries\color{Ink}}
+  {\color{AccentInk}\thesection}
+  {0.72em}
+  {}
+  [\vspace{0.28em}{\color{Line}\titlerule[0.7pt]}]
+\titlespacing*{\section}{0pt}{2.9em plus 0.4em minus 0.2em}{1.15em}
+
+\titleformat{\subsection}
+  {\sffamily\fontsize{14.2}{17}\selectfont\bfseries\color{Ink}}
+  {\color{SiennaInk}\thesubsection}
+  {0.68em}
+  {}
+\titlespacing*{\subsection}{0pt}{2.2em plus 0.3em minus 0.2em}{0.62em}
+
+\titleformat{\subsubsection}
+  {\sffamily\fontsize{11.5}{14}\selectfont\bfseries\color{Ink}}
+  {\color{Muted}\thesubsubsection}
+  {0.62em}
+  {}
+\titlespacing*{\subsubsection}{0pt}{1.7em plus 0.2em minus 0.15em}{0.38em}
+
+\titleformat{\paragraph}[runin]
+  {\sffamily\bfseries\color{SiennaInk}}
+  {}
+  {0pt}
+  {}
+  [\hspace{0.55em}]
+\titlespacing*{\paragraph}{0pt}{1.1em}{0pt}
+
+% Running furniture
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\enspace #1}}
+\fancyhead[L]{\sffamily\small\color{Muted}A Guided Tour of Modern Statistics}
+\fancyhead[R]{\sffamily\small\color{Muted}\nouppercase{\rightmark}}
+\fancyfoot[C]{\sffamily\small\color{Faint}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+\makeatletter
+\renewcommand{\headrule}{\hbox to\headwidth{\color{Line}\leaders\hrule height \headrulewidth\hfill}}
+\makeatother
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyfoot[C]{\sffamily\small\color{Faint}\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% Title page, preserving the original title and author text
+\makeatletter
+\renewcommand{\maketitle}{%
+  \begin{titlepage}
+    \pagecolor{Paper}
+    \centering
+    \vspace*{0.245\textheight}
+    {\color{Line}\rule{0.58\textwidth}{0.9pt}\par}
+    \vspace{1.7em}
+    {\sffamily\fontsize{34}{40}\selectfont\bfseries\color{Ink}\@title\par}
+    \vspace{1.25em}
+    {\color{Accent}\rule{2.8em}{2.2pt}\par}
+    \vfill
+    {\fontsize{15}{19}\selectfont\color{InkSoft}\@author\par}
+    \vspace{0.055\textheight}
+  \end{titlepage}
+}
+\makeatother
+
+% Contents
+\renewcommand{\contentsname}{Contents}
+\renewcommand{\cfttoctitlefont}{\sffamily\fontsize{24}{29}\selectfont\bfseries\color{Ink}}
+\renewcommand{\cftaftertoctitle}{\par\vspace{0.45em}{\color{Line}\hrule height 0.8pt}\vspace{0.8em}}
+\setlength{\cftbeforesecskip}{0.34em}
+\setlength{\cftbeforesubsecskip}{0.08em}
+\renewcommand{\cftsecfont}{\sffamily\bfseries\color{Ink}}
+\renewcommand{\cftsecpagefont}{\sffamily\bfseries\color{AccentInk}}
+\renewcommand{\cftsubsecfont}{\color{InkSoft}}
+\renewcommand{\cftsubsecpagefont}{\color{Muted}}
+\renewcommand{\cftsecleader}{\color{Line}\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsubsecleader}{\color{LineSoft}\cftdotfill{\cftdotsep}}
+
+% Lists and displayed material
+\setlist{topsep=0.45em,itemsep=0.18em,parsep=0.08em,leftmargin=1.65em}
+\setlist[itemize,1]{label=\textcolor{Accent}{\scriptsize$\blacktriangleright$}}
+\setlist[itemize,2]{label=\textcolor{Sienna}{\textbullet}}
+\setlist[enumerate,1]{label=\textcolor{AccentInk}{\sffamily\bfseries\arabic*.},ref=\arabic*}
+\setlength{\abovedisplayskip}{0.72em plus 0.2em minus 0.15em}
+\setlength{\belowdisplayskip}{0.72em plus 0.2em minus 0.15em}
+\setlength{\arrayrulewidth}{0.45pt}
+\arrayrulecolor{Line}
+\renewcommand{\arraystretch}{1.16}
+
+% Figures, tables, and algorithms
+\captionsetup{
+  font={small,color=Muted},
+  labelfont={sf,bf,color=Ink},
+  labelsep=period,
+  skip=7pt
+}
+\captionsetup[table]{position=bottom}
+\floatname{algorithm}{Algorithm}
+\makeatletter
+\renewcommand{\ALG@name}{Algorithm}
+\makeatother
+
+% Theorem families: paper-like cards with website accent colors
+\tcbset{bluecard/.style={
+  enhanced,breakable,
+  colback=Surface,colframe=Line,
+  boxrule=0.55pt,arc=2mm,
+  borderline west={2.2pt}{0pt}{Accent},
+  left=9pt,right=9pt,top=7pt,bottom=7pt,
+  before skip=10pt plus 2pt,after skip=10pt plus 2pt
+}}
+\tcbset{siennacard/.style={
+  enhanced,breakable,
+  colback=SiennaWash!46!Paper,colframe=Line,
+  boxrule=0.55pt,arc=2mm,
+  borderline west={2.2pt}{0pt}{Sienna},
+  left=9pt,right=9pt,top=7pt,bottom=7pt,
+  before skip=10pt plus 2pt,after skip=10pt plus 2pt
+}}
+\tcbset{softcard/.style={
+  enhanced,breakable,
+  colback=Surface,colframe=LineSoft,
+  boxrule=0.5pt,arc=2mm,
+  borderline west={1.6pt}{0pt}{Faint},
+  left=9pt,right=9pt,top=7pt,bottom=7pt,
+  before skip=9pt plus 2pt,after skip=9pt plus 2pt
+}}
+\tcolorboxenvironment{thm}{bluecard}
+\tcolorboxenvironment{lem}{bluecard}
+\tcolorboxenvironment{cor}{bluecard}
+\tcolorboxenvironment{prop}{bluecard}
+\tcolorboxenvironment{defn}{siennacard}
+\tcolorboxenvironment{conv}{siennacard}
+\tcolorboxenvironment{exam}{softcard}
+\tcolorboxenvironment{rem}{softcard}
+\tcolorboxenvironment{appr}{softcard}
+\tcolorboxenvironment{obs}{softcard}
+
+\makeatletter
+\renewenvironment{proof}[1][\proofname]{%
+  \par\pushQED{\qed}%
+  \normalfont\topsep6pt plus2pt\relax
+  \trivlist\item[\hskip\labelsep\sffamily\bfseries\color{SiennaInk}#1\@addpunct{.}]\ignorespaces
+}{%
+  \popQED\endtrivlist\@endpefalse
+}
+\makeatother
+
+% Small typographic refinements
+\renewcommand{\qedsymbol}{\textcolor{SiennaInk}{$\blacksquare$}}
+\AtBeginDocument{\color{InkSoft}}
