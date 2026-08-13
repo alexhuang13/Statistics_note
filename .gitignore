@@ -12,3 +12,17 @@
 missfont.log
 _site/
 main.pdf
+
+.web-build/
+
+# TeX4ht generated files
+*.4ct
+*.4tc
+*.dvi
+*.idv
+*.lg
+*.tmp
+*.xref
+main*.html
+main.css
+figures/rejection_regions-.png

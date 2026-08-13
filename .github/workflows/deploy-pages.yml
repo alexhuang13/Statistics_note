@@ -27,12 +27,12 @@ jobs:
           root_file: main.tex
           texlive_version: 2026
           args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+          post_compile: ./scripts/build_html.sh
 
       - name: Assemble website
         shell: bash
         run: |
-          mkdir -p _site
-          cp -R web/. _site/
+          test -f _site/index.html
           cp main.pdf _site/notes.pdf
           touch _site/.nojekyll
           printf '{"sha":"%s","short_sha":"%s","updated":"%s"}\n' \
