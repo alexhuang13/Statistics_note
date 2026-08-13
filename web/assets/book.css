@@ -363,3 +363,21 @@ table { max-width: 100%; border-collapse: collapse; }
   .landing, .landing-hero, .landing-hero-inner, .landing-content { width: 100%; max-width: 100%; min-width: 0; }
   .landing h1, .landing-subtitle { max-width: 100%; word-break: normal; overflow-wrap: anywhere; }
 }
+
+/* Stronger section-number hierarchy */
+.document-page .subsectionHead .titlemark {
+  margin-bottom: 10px;
+  font-size: .56em;
+  font-weight: 700;
+  letter-spacing: .055em;
+}
+.document-page .subsubsectionHead .titlemark {
+  margin-bottom: 8px;
+  font-size: .68em;
+  font-weight: 700;
+  letter-spacing: .045em;
+}
+.book-nav .nav-number {
+  font-size: 1.04em;
+  font-weight: 600;
+}
