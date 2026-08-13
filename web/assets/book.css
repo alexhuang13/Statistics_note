@@ -592,3 +592,29 @@ body:has(.landing) .header-actions {
 @media (max-width: 560px) {
   .landing h1 { font-size: 30px; line-height: 1.2; }
 }
+
+/* Figure 2: keep all three CART panels on one horizontal row */
+.document-page figure:has(> .subfigure) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.document-page figure:has(> .subfigure) > .subfigure {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+}
+.document-page figure:has(> .subfigure) > .subfigure p {
+  margin: 0;
+}
+.document-page figure:has(> .subfigure) > .subfigure img {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+}
+.document-page figure:has(> .subfigure) > .caption {
+  flex: 0 0 100%;
+  width: 100%;
+}
