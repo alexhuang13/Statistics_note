@@ -415,24 +415,29 @@ highly variable and expressive estimators, but can make less variable
 estimators worse.
 
 \subsubsection{Boosting}
-\begin{algorithm}
-\caption{Forward Stagewise Additive Modeling}
-\begin{algorithmic}[1]
-  \State Initialize $\hat{f}_0(\cdot) = 0$.
+\begin{algorithm}[H]
+\caption{Forward stagewise additive modeling}
+\label{alg:forward-stagewise}
+\begin{algorithmic}
+  \Statex \textbf{Input:} training data $\{(\boldsymbol{x}_n,y_n)\}_{n=1}^{N}$,
+    loss $\mathcal{L}$, and stages $M$; \quad
+    \textbf{Output:} predictor $\hat{f}_M$
+  \State Initialize $\hat{f}_0(\cdot) \gets 0$
   \For{$m = 1, \ldots, M$}
-    \State Compute
-      \[
-        \hat{\theta}_m, \hat{\phi}_m
-        \;:=\; \operatorname*{argmin}_{\theta, \phi}
-        \frac{1}{N}\sum_{n=1}^{N}
-        \mathcal{L}\!\left(\hat{f}_{m-1}(\boldsymbol{x}_n)
-        + \theta\phi(\boldsymbol{x}_n),\, y_n\right).
-      \]
-    \State Set $\hat{f}_m(\cdot) = \hat{f}_{m-1}(\cdot)
-      + \hat{\theta}_m \hat{\phi}_m(\cdot)$.
+    \State Choose the next coefficient and weak learner:
+    \Statex \hspace{\algorithmicindent}$\displaystyle
+      (\hat{\theta}_m,\hat{\phi}_m)
+      \gets \operatorname*{argmin}_{\theta,\phi}
+      \frac{1}{N}\sum_{n=1}^{N}
+      \mathcal{L}\!\left(
+        \hat{f}_{m-1}(\boldsymbol{x}_n)
+        + \theta\phi(\boldsymbol{x}_n),y_n
+      \right)$
+    \State Update $\hat{f}_m(\cdot) \gets \hat{f}_{m-1}(\cdot)
+      + \hat{\theta}_m\hat{\phi}_m(\cdot)$
   \EndFor
-  \State \Return $\hat{f}_M(\cdot) = \sum_{m=1}^{M}
-    \hat{\theta}_m \hat{\phi}_m(\cdot)$.
+  \State \Return $\displaystyle \hat{f}_M(\cdot)
+    = \sum_{m=1}^{M}\hat{\theta}_m\hat{\phi}_m(\cdot)$
 \end{algorithmic}
 \end{algorithm}
 For boosting, we first find the $\hat{f}_1(\cdot)$ that best

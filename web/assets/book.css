@@ -618,3 +618,63 @@ body:has(.landing) .header-actions {
   flex: 0 0 100%;
   width: 100%;
 }
+
+/* Algorithms: simple left-aligned print-style treatment */
+.document-page .algorithm {
+  width: 100%;
+  margin: 1.55em 0 1.75em;
+}
+.document-page .algorithm > figure.float {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border-top: 1px solid var(--ink-soft);
+  border-bottom: 1px solid var(--ink-soft);
+  text-align: left;
+}
+.document-page .algorithm > figure.float > .caption {
+  margin: 0;
+  padding: .32em 0 .36em;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: left;
+}
+.document-page .algorithm > figure.float > .caption .id {
+  color: var(--blue-ink);
+}
+.document-page .algorithm > figure.float > .algorithmic {
+  padding: .45em 0 .58em;
+  overflow-x: auto;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: left;
+  scrollbar-width: thin;
+}
+.document-page .algorithm > figure.float > .algorithmic > .line {
+  display: block;
+  min-width: max-content;
+  text-align: left;
+}
+.document-page .algorithm > figure.float > .algorithmic > .line > .label {
+  display: none;
+}
+.document-page .algorithm > figure.float > .algorithmic > .line > .algorithmic {
+  display: inline;
+  text-align: left;
+  white-space: nowrap;
+}
+.document-page .algorithm > figure.float > .algorithmic br.algorithmic {
+  display: block;
+}
+.document-page .algorithm .mathjax-inline {
+  text-align: left;
+}
+
+@media (max-width: 700px) {
+  .document-page .algorithm > figure.float > .algorithmic {
+    font-size: 14px;
+  }
+}

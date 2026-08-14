@@ -176,10 +176,22 @@
   skip=7pt
 }
 \captionsetup[table]{position=bottom}
+\captionsetup[algorithm]{
+  position=top,
+  font={small,color=Muted},
+  labelfont={sf,bf,color=AccentInk},
+  textfont={sf,color=Ink},
+  skip=8pt
+}
 \floatname{algorithm}{Algorithm}
 \makeatletter
 \renewcommand{\ALG@name}{Algorithm}
 \makeatother
+\algrenewcommand\algorithmicrequire{\textcolor{AccentInk}{\sffamily\bfseries Input:}}
+\algrenewcommand\algorithmicensure{\textcolor{AccentInk}{\sffamily\bfseries Output:}}
+\algrenewcommand\algorithmiccomment[1]{\hfill\textcolor{Muted}{\footnotesize$\triangleright$~#1}}
+\algrenewcommand\alglinenumber[1]{\textcolor{Faint}{\sffamily\scriptsize #1}}
+\algrenewcommand\algorithmicindent{1.5em}
 
 % Theorem families: paper-like cards with website accent colors
 \tcbset{bluecard/.style={
