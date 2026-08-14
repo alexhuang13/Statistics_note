@@ -416,7 +416,7 @@ where $I_n$ denotes the identity matrix in $\mathbb{R}^n$.
 \end{defn}
 
 \begin{lem}[Isotropic Random Vectors]
-\label{lem: inner_prod}
+\label{lem:inner_prod}
 Let $X$ be an isotropic random vector in $\mathbb{R}^n$. Then
 \[
 \mathbb{E}\, \|X\|_2^2 = n.
@@ -429,11 +429,11 @@ Moreover, if $X$ and $Y$ are two independent isotropic random vectors in $\mathb
 
 
 \begin{rem}[Almost Orthogonality of Independent Vectors]
-Let us normalize the random vectors $X$ and $Y$ in Lemma~\ref{lem: inner_prod}, setting
+Let us normalize the random vectors $X$ and $Y$ in Lemma~\ref{lem:inner_prod}, setting
 \[
 \overline{X} := \frac{X}{\|X\|_2} \quad \text{and} \quad \overline{Y} := \frac{Y}{\|Y\|_2}.
 \]
-Lemma~\ref{lem: inner_prod} is basically telling us that $\|X\|_2 \asymp \sqrt{n}$, $\|Y\|_2 \asymp \sqrt{n}$, and $\langle X, Y \rangle \asymp \sqrt{n}$ with high probability, which implies that
+Lemma~\ref{lem:inner_prod} is basically telling us that $\|X\|_2 \asymp \sqrt{n}$, $\|Y\|_2 \asymp \sqrt{n}$, and $\langle X, Y \rangle \asymp \sqrt{n}$ with high probability, which implies that
 \[
 |\langle \overline{X}, \overline{Y} \rangle| \asymp \frac{1}{\sqrt{n}}.
 \]
@@ -800,12 +800,25 @@ We estimate the two terms separately:
 \left\langle \mathbb{E}A - \frac{p+q}{2}, A^* - \hat{A} \right\rangle \leq \frac{p-q}{2} \sum_{i,j} |A^*_{i,j} - \hat{A}_{i,j}| = \frac{p-q}{2} \|A^* - \hat{A}\|_1
 \end{equation}
 Combining \eqref{eq:31}, \eqref{eq:32} and applying Grothendieck’s Inequality:
-\begin{align}
-\frac{p-q}{2} \|A^* - \hat{A}\|_1 &\leq \langle A - \mathbb{E}A, \hat{A} - A^* \rangle \label{eq:34} \\
-&\leq |\langle A - \mathbb{E}A, \hat{A} \rangle| + |\langle A - \mathbb{E}A, A^* \rangle| \label{eq:35} \\
-&\leq 2 \max_{Y_{ii}=1,\, Y \succeq 0} |\langle A - \mathbb{E}A, Y \rangle| \label{eq:36} \\
-&\leq 2K \max_{x, y \in \{\pm 1\}^n} \left| \sum_{i,j} (A_{ij} - \mathbb{E}A_{ij}) x_i y_j \right| \label{eq:37}
-\end{align}
+\begin{equation}
+\label{eq:34}
+\frac{p-q}{2} \|A^* - \hat{A}\|_1 \leq \langle A - \mathbb{E}A, \hat{A} - A^* \rangle
+\end{equation}
+\begin{equation}
+\label{eq:35}
+\langle A - \mathbb{E}A, \hat{A} - A^* \rangle
+\leq |\langle A - \mathbb{E}A, \hat{A} \rangle| + |\langle A - \mathbb{E}A, A^* \rangle|
+\end{equation}
+\begin{equation}
+\label{eq:36}
+|\langle A - \mathbb{E}A, \hat{A} \rangle| + |\langle A - \mathbb{E}A, A^* \rangle|
+\leq 2 \max_{Y_{ii}=1,\, Y \succeq 0} |\langle A - \mathbb{E}A, Y \rangle|
+\end{equation}
+\begin{equation}
+\label{eq:37}
+2 \max_{Y_{ii}=1,\, Y \succeq 0} |\langle A - \mathbb{E}A, Y \rangle|
+\leq 2K \max_{x, y \in \{\pm 1\}^n} \left| \sum_{i,j} (A_{ij} - \mathbb{E}A_{ij}) x_i y_j \right|
+\end{equation}
 Looking at \eqref{eq:36}, this is a sum of $n^2$ independent random variables. We treat it as $n^2$ matrices of size $1 \times 1$ and apply Lemma 1. Let $Z_{ij} = (A_{ij} - \mathbb{E}A_{ij}) x_i y_j$, $Z = \sum_{i,j} Z_{ij}$, $\|Z_{ij}\|_{op} = |Z_{ij}| \leq 1$, $\mathrm{var}(Z_{ij}) \leq p(1-p) \leq p$:
 \begin{equation*}
 \label{eq:38}

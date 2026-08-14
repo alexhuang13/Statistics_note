@@ -728,7 +728,7 @@ We transform the contour to the unit circle and change variables $x=u+\frac{1}{u
 \end{align*}
 \textbf{Conclusion:} Variance $\to \frac{1}{(2\pi i)^2} \oiint \exp\left(a_1\left(v_1+\frac{1}{v_1}\right)+a_2\left(v_2+\frac{1}{v_2}\right)\right) \frac{\dd u_1\dd u_2}{(u_1-u_2)^2}$.
 
-Match this with formula in Theorem 1. Hint: Either directly with the 1st formula for $C(f,g)$, or
+Match this with the formula in Theorem~\ref{RMT_CLT}. Hint: Either directly with the 1st formula for $C(f,g)$, or
 \[
 \sum_{i=1}^Nf(\lambda_i)=\frac{1}{2\pi i}\oint_{\text{around all }\lambda_i}f(z)\sum_{i=1}^N\frac{1}{z-\lambda_i}\dd z
 \]
@@ -737,7 +737,7 @@ and use it to compute with $C(\frac{1}{z-x},\frac{1}{w-x})$ in Theorems.
 \paragraph{Step 3: Gaussianity} We need to show that 
 \[
 \EE\left[\prod_{k=1}^m
-\left(\sum_{i=1}^N\exp\left(a_k\frac{\lambda_i}{\sqrt{N}}\right)-\EE\sum_{i=1}^N\exp\left(a_k\frac{\lambda_i}{\sqrt{N}}\right)\right)\right] \to \text{expressions of the Wick's formula in Lemma \ref{lem:12.1}}.
+\left(\sum_{i=1}^N\exp\left(a_k\frac{\lambda_i}{\sqrt{N}}\right)-\EE\sum_{i=1}^N\exp\left(a_k\frac{\lambda_i}{\sqrt{N}}\right)\right)\right] \to \text{expressions of Wick's formula}.
 \]
 All of them have exactly the same $\prod_{k=1}^m$ part, but cross term part $\prod_{k<l}$ varies.
 As in Steps 1,2, we change variables $u_k=\sqrt{N}v_k$ and use

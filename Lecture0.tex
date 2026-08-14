@@ -708,12 +708,14 @@ The ratio $f(x,t)/n$ is precisely the density of a Brownian motion. In particula
 
 \begin{prop}[Kolmogorov backward/Forward equation]
 Let $\{p(t, x, y), \, x \in \mathbb{R}^n, \, y \in \mathbb{R}^n\}$ be the transition density of an $n$-dimensional standard Brownian motion. Then
-\begin{align}
+\begin{equation}
 \label{Kol_eq}
-\frac{\partial p(t, x, y)}{\partial t} &= \frac{1}{2} \Delta_x p(t, x, y) = \frac{1}{2} \sum_{i=1}^{n} \frac{\partial^2 p(t, x, y)}{\partial x_i^2} \\
+\frac{\partial p(t, x, y)}{\partial t} = \frac{1}{2} \Delta_x p(t, x, y) = \frac{1}{2} \sum_{i=1}^{n} \frac{\partial^2 p(t, x, y)}{\partial x_i^2}
+\end{equation}
+\begin{equation}
 \label{FP_eq}
-\frac{\partial p(t, x, y)}{\partial t} &= \frac{1}{2} \Delta_y p(t, x, y) = \frac{1}{2} \sum_{i=1}^{n} \frac{\partial^2 p(t, x, y)}{\partial y_i^2}
-\end{align}
+\frac{\partial p(t, x, y)}{\partial t} = \frac{1}{2} \Delta_y p(t, x, y) = \frac{1}{2} \sum_{i=1}^{n} \frac{\partial^2 p(t, x, y)}{\partial y_i^2}
+\end{equation}
 Equation~\ref{Kol_eq} is called the \textit{Kolmogorov backward equation} (the first equation), and~\ref{FP_eq} is called the \textit{Kolmogorov forward equation} (the second equation), also known as the \textit{Fokker--Planck equation}.
 \end{prop}
 
@@ -800,13 +802,13 @@ Let
 and denote $\mathcal{L} = \frac{1}{2}\sum_{i,j=1}^{n} a_{ij} \frac{\partial^2}{\partial x_i \partial x_j} + \sum_{i=1}^{n} b_i(x) \frac{\partial}{\partial x_i}$, where $(a_{ij})_{i,j=1,\cdots,n} = \Sigma\Sigma^\top$. Let $f \in C_0^2(\mathbb{R}^n)$, $q(x) \in C(\mathbb{R}^n)$, and $q(x)$ be bounded below.
 \begin{enumerate}
     \item Let $v(t, x) = E\left(f(\xi_t) \exp\left(-\int_0^t q(\xi_s) \, \mathrm{d}s\right) \bigg| \xi_0 = x\right)$. Then
-    \begin{equation*}
+    \begin{equation}
     \label{eq:FK_formula}
     \begin{cases}
     \dfrac{\partial v}{\partial t} = \mathcal{L}v - qv & t > 0, \; x \in \mathbb{R}^n \\[6pt]
     v(0, x) = f(x) & x \in \mathbb{R}^n
     \end{cases}.
-    \end{equation*}
+    \end{equation}
     \item If $w(t, x) \in C^{1,2}(\mathbb{R} \times \mathbb{R}^n)$ is bounded on $K \times \mathbb{R}^n$, $K \subset \mathbb{R}$, and $w$ is a solution to~\eqref{eq:FK_formula}, then $w(t, x) = v(t, x)$.
 \end{enumerate}
 \end{thm}
