@@ -10,7 +10,7 @@ In addition to non-asymptotic results, we will need asymptotic analysis, which i
     \item Replica Method
 \end{enumerate}
 
-This section mainly follows STATC206B (UC Berkeley, taught by Vadim Gorin) and STAT260 (UC Berkeley, taught by Song Mei, 2021). I also refered to the book~\cite{bai2010spectral}.
+This section mainly follows STAT C206B at UC Berkeley, taught by Vadim Gorin~\cite{gorinBerkeleyStatC206B}, and STAT 260 at UC Berkeley, taught by Song Mei in 2021~\cite{meiBerkeleyStat260}. I also referred to the book~\cite{bai2010spectral}.
 
 \subsection{Density of Eigenvalues in Classical Ensembles of Random Matrices}
 
@@ -467,7 +467,6 @@ where
 In the spiked model $\Sigma = I + \theta\, vv^*$, Baik, Ben Arous, and P\'{e}ch\'{e} (2005) discovered a phase transition for $\lambda_{\max}$ of $\Sigma$. In general form, it is stated as
 
 \begin{thm}[Spiked Random Matrices]
-    \label{thm:9.1}
     Let $\lambda_1<\lambda_2<\cdots<\lambda_N$ are $N$ eigenvalues of 
     \[
     C = \sqrt{N}a vv^* +\sqrt{\frac{2}{\beta}}G\beta E,
@@ -484,6 +483,7 @@ In the spiked model $\Sigma = I + \theta\, vv^*$, Baik, Ben Arous, and P\'{e}ch\
         \lim_{N\to\infty} \frac{\lambda_N}{\sqrt{N}} = 2.
         \]
     \end{enumerate}
+    \label{thm:spiked-random-matrices}
 \end{thm}
 By the theorem, we can easily get
 \begin{cor}
@@ -495,7 +495,7 @@ By the theorem, we can easily get
 \end{cor}
 \begin{thm}[Recover $v$]
     \label{thm:9.2}
-    In the setting of Theorem \ref{thm:9.1}. Let $\hat{v}$ denote the eigenvector corresponding to $\lambda_N$ and let $\phi$ be the angle between $v$ and $\hat{v}$,
+    In the setting of Theorem \ref{thm:spiked-random-matrices}. Let $\hat{v}$ denote the eigenvector corresponding to $\lambda_N$ and let $\phi$ be the angle between $v$ and $\hat{v}$,
     \[
     \lim_{N\to\infty} \sin\phi = \frac{1}{a} \wedge 1.
     \]
@@ -552,7 +552,7 @@ By the theorem, we can easily get
     \[
     a - y + \frac{1}{2}(y- \sqrt{y^2-4}) = 0 \Longrightarrow y = a+ \frac{1}{a},
     \]
-    and this proves Theorem \ref{thm:9.1}.
+    and this proves Theorem \ref{thm:spiked-random-matrices}.
 
     \paragraph{Step 3} \ For Theorem \ref{thm:9.2}, we notice that the eigenvalues are
     \[

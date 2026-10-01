@@ -9,7 +9,7 @@ Up to this point, we have acquired many statistical tools, and it is now time to
     \item Time Series
 \end{enumerate}
 
-This section mainly follows STAT254 (UC Berkeley), Statistics Learning (PKU, taught by Fang Yao) and STAT153 (UC Berkeley).
+This section mainly follows STAT 254 at UC Berkeley~\cite{giordanoBerkeleyStat254}, Statistical Learning at Peking University, taught by Fang Yao~\cite{yaoPkuStatisticalLearning}, and STAT 153 at UC Berkeley~\cite{hamilton2026stat153}.
 I would also like to extend my heartfelt thanks to my STAT254 professor, Ryan Giordano, who has offered me countless insights and inspiration in the field of statistics.
 
 
@@ -572,4 +572,342 @@ Intuitively, the more aligned the two gradients are after weighting by
 $H_{\hat\theta}^{-1}$, the more the training sample $z$ helps that prediction.
 
 \subsection{Time Series}
-\todo
+This subsection follows the conceptual arc of UC Berkeley STAT 153/248
+\cite{hamilton2026stat153} and parts of \cite{shumway2025time}. We will not repeat
+linear regression or general model selection. Instead, we focus on what is
+special about ordered data: dependence, forecasting from the past, and models
+whose structure respects time.
+
+\subsubsection{Dependence, stationarity, and forecasting}
+A \textbf{time series} is one observed path $X_1,\ldots,X_n$ of a stochastic
+process $\{X_t\}_{t\in\mathbb{Z}}$. Unlike an iid sample, the ordering is part of
+the data. Usually $X_t$ is informative about $X_{t+1}$, and often we observe only
+one realization rather than many independent copies of the whole process.
+
+Let
+\[
+    \mathcal{F}_t=\sigma(X_s:s\leq t)
+\]
+denote the information available at time $t$. Under squared error loss, the best
+$h$-step-ahead forecast is the conditional mean
+\[
+    \widehat{X}_{t+h\mid t}
+    =\mathbb{E}[X_{t+h}\mid\mathcal{F}_t].
+\]
+This formula is deliberately abstract. Every forecasting model---ARMA, a state
+space model, a convolutional network, or a recurrent network---is a different
+way to summarize $\mathcal{F}_t$ well enough to approximate this conditional
+expectation.
+
+The simplest benchmark is \textbf{white noise}. A sequence $\{\varepsilon_t\}$
+is white noise with variance $\sigma^2$, written
+$\varepsilon_t\sim\mathrm{WN}(0,\sigma^2)$, if
+\[
+    \mathbb{E}[\varepsilon_t]=0,\qquad
+    \operatorname{Var}(\varepsilon_t)=\sigma^2,\qquad
+    \operatorname{Cov}(\varepsilon_t,\varepsilon_s)=0\quad(t\neq s).
+\]
+White noise need not be independent. Gaussian white noise is special: because a
+Gaussian vector is independent exactly when it is uncorrelated, it is an iid
+Gaussian sequence.
+
+To learn dependence from a single path, we need some stability across time.
+
+\begin{defn}[Weak stationarity]
+A finite-variance process $\{X_t\}$ is \textbf{weakly stationary} if, for some
+constant $\mu$ and function $\gamma$,
+\[
+    \mathbb{E}[X_t]=\mu,
+    \qquad
+    \operatorname{Cov}(X_{t+h},X_t)=\gamma(h)
+\]
+for every $t$ and $h$. Its autocorrelation function (ACF) is
+$\rho(h)=\gamma(h)/\gamma(0)$.
+\end{defn}
+
+Stationarity says that the covariance between two observations depends on their
+separation, not their calendar location. This lets different time windows act as
+comparable replicates. For a stationary series, natural estimates are
+\[
+    \widehat{\gamma}(h)
+    =\frac{1}{n}\sum_{t=1}^{n-h}(X_{t+h}-\overline{X})(X_t-\overline{X}),
+    \qquad
+    \widehat{\rho}(h)=\frac{\widehat{\gamma}(h)}{\widehat{\gamma}(0)}.
+\]
+Strict stationarity requires the entire joint distribution to be invariant under
+time shifts; weak stationarity only asks for invariance of the first two moments.
+For linear prediction, the weaker notion is often enough. Stationarity alone does
+not guarantee that time averages converge to population averages; that additional
+role is played by ergodicity or suitable mixing conditions.
+
+\begin{exam}[A random walk is not stationary]
+Let $X_t=X_{t-1}+\varepsilon_t$ with $X_0=0$ and iid innovations of variance
+$\sigma^2$. Then
+\[
+    X_t=\sum_{j=1}^t\varepsilon_j,
+    \qquad
+    \operatorname{Var}(X_t)=t\sigma^2,
+    \qquad
+    \operatorname{Cov}(X_s,X_t)=\sigma^2\min(s,t).
+\]
+The variance grows with time and the covariance depends on $s$ and $t$, not only
+on $|t-s|$. However, the differences
+$\Delta X_t=X_t-X_{t-1}=\varepsilon_t$ are stationary. This is the basic idea
+behind integrated models: model stable increments rather than an unstable level.
+\end{exam}
+
+\begin{rem}[Time-respecting evaluation]
+Randomly splitting a dependent series leaks information between training and
+test sets and may even train on the future to predict the past. Forecasts should
+be evaluated chronologically, for example by repeatedly training on
+$X_{1:t}$ and testing on $X_{t+1:t+h}$. The forecasting origin moves forward;
+time does not get shuffled.
+\end{rem}
+
+\subsubsection{The time and frequency views}
+The ACF describes dependence by lag. The spectral density describes the same
+second-order structure by frequency. If $\sum_h|\gamma(h)|<\infty$, define
+\[
+    f(\omega)
+    =\frac{1}{2\pi}\sum_{h=-\infty}^{\infty}\gamma(h)e^{-\ii\omega h},
+    \qquad -\pi\leq\omega\leq\pi.
+\]
+Fourier inversion gives
+\[
+    \gamma(h)=\int_{-\pi}^{\pi}f(\omega)e^{\ii\omega h}\,\dd\omega,
+    \qquad
+    \operatorname{Var}(X_t)=\gamma(0)=\int_{-\pi}^{\pi}f(\omega)\,\dd\omega.
+\]
+Thus $f(\omega)$ decomposes variance by frequency: a peak near zero means slow,
+persistent variation, while a peak away from zero suggests oscillation. The time
+and frequency domains are not rival explanations; they are Fourier transforms of
+the same covariance information.
+
+For observed data, the periodogram
+\[
+    I_n(\omega)
+    =\frac{1}{2\pi n}
+      \left|\sum_{t=1}^n(X_t-\overline{X})e^{-\ii\omega t}\right|^2
+\]
+reveals prominent frequencies. A raw periodogram remains noisy even when $n$ is
+large, so estimating a smooth spectrum usually requires averaging or smoothing
+nearby frequencies.
+
+Filtering also becomes transparent in this view. If
+$Y_t=\sum_j a_jX_{t-j}$ and $A(z)=\sum_j a_jz^j$, then
+\[
+    f_Y(\omega)=|A(e^{-\ii\omega})|^2f_X(\omega).
+\]
+A moving average suppresses frequencies at which its transfer function $A$ is
+small. This observation will later connect classical linear filters to
+one-dimensional convolutional networks.
+
+\subsubsection{ARMA models}
+We now turn to the central model class. Define the backshift operator
+$BX_t=X_{t-1}$. For polynomials
+\[
+    \phi(z)=1-\phi_1z-\cdots-\phi_pz^p,
+    \qquad
+    \theta(z)=1+\theta_1z+\cdots+\theta_qz^q,
+\]
+an $\operatorname{ARMA}(p,q)$ process satisfies
+\[
+    \phi(B)(X_t-\mu)=\theta(B)\varepsilon_t,
+    \qquad \varepsilon_t\sim\mathrm{WN}(0,\sigma^2).
+\]
+Equivalently,
+\[
+    X_t-\mu
+    =\sum_{j=1}^p\phi_j(X_{t-j}-\mu)
+     +\varepsilon_t+\sum_{j=1}^q\theta_j\varepsilon_{t-j}.
+\]
+The AR part propagates past states; the MA part propagates past shocks. Notice
+that a time-series MA model averages latent innovations, not observed data. It
+should not be confused with the moving-average smoother used to remove noise.
+
+\paragraph{The AR(1) model}
+\hspace{0.55em}Consider
+\[
+    X_t-\mu=\phi(X_{t-1}-\mu)+\varepsilon_t.
+\]
+Iterating backward gives
+\[
+    X_t-\mu
+    =\varepsilon_t+\phi\varepsilon_{t-1}+\phi^2\varepsilon_{t-2}+\cdots.
+\]
+This causal stationary representation exists when $|\phi|<1$. In that case,
+\[
+    \operatorname{Var}(X_t)=\frac{\sigma^2}{1-\phi^2},
+    \qquad
+    \rho(h)=\phi^{|h|}.
+\]
+Positive $\phi$ creates persistent motion, negative $\phi$ creates alternating
+motion, and $|\phi|$ determines how quickly memory decays. At $\phi=1$, shocks
+never decay and the model becomes the nonstationary random walk.
+
+The $h$-step forecast and its error variance are especially revealing:
+\[
+\begin{aligned}
+    \widehat{X}_{t+h\mid t}
+        &=\mu+\phi^h(X_t-\mu),\\
+    \operatorname{Var}(X_{t+h}-\widehat{X}_{t+h\mid t}\mid\mathcal{F}_t)
+        &=\sigma^2\sum_{j=0}^{h-1}\phi^{2j}
+          =\sigma^2\frac{1-\phi^{2h}}{1-\phi^2}.
+\end{aligned}
+\]
+The point forecast forgets the present at rate $|\phi|^h$, while forecast
+uncertainty grows toward the unconditional variance. These are two sides of the
+same loss of memory.
+
+\paragraph{The MA(1) model}
+\hspace{0.55em}Now consider
+\[
+    X_t=\varepsilon_t+\theta\varepsilon_{t-1}.
+\]
+It is stationary for every finite $\theta$, with
+\[
+    \gamma(0)=\sigma^2(1+\theta^2),\qquad
+    \rho(1)=\frac{\theta}{1+\theta^2},\qquad
+    \rho(h)=0\quad(|h|>1).
+\]
+The shock $\varepsilon_t$ affects only $X_t$ and $X_{t+1}$, so the ACF cuts off
+after one lag. By contrast, an AR(1) shock has a geometrically decaying effect
+forever.
+
+There is an identifiability issue: $\theta$ and $1/\theta$ generate the same ACF,
+and a rescaling of $\sigma^2$ can make their autocovariances identical. We choose
+the \textbf{invertible} representation $|\theta|<1$, for which the innovations can
+be recovered from the observed past:
+\[
+    \varepsilon_t=(1+\theta B)^{-1}X_t
+    =\sum_{j=0}^{\infty}(-\theta)^jX_{t-j}.
+\]
+Invertibility is therefore both a stability condition and a convention that
+selects one observable representation among equivalent ones.
+
+\paragraph{General ARMA models}
+\hspace{0.55em}For $\phi$ and $\theta$ with no common roots, the usual forecasting model is
+causal when every root of $\phi(z)=0$ lies outside the unit circle, and invertible
+when every root of $\theta(z)=0$ lies outside the unit circle. Then
+\[
+    X_t-\mu=\frac{\theta(B)}{\phi(B)}\varepsilon_t
+           =\sum_{j=0}^{\infty}\psi_j\varepsilon_{t-j},
+    \qquad \sum_{j=0}^{\infty}|\psi_j|<\infty.
+\]
+Its spectral density is the rational function
+\[
+    f_X(\omega)
+    =\frac{\sigma^2}{2\pi}
+      \frac{|\theta(e^{-\ii\omega})|^2}{|\phi(e^{-\ii\omega})|^2}.
+\]
+Poles created by the AR polynomial produce persistent or oscillatory modes;
+zeros created by the MA polynomial suppress selected frequencies. This is the
+frequency-domain meaning of an ARMA model.
+
+\begin{thm}[Wold decomposition]
+Let $\{X_t\}$ be a zero-mean, weakly stationary, purely nondeterministic process
+with finite variance. Then
+\[
+    X_t=\sum_{j=0}^{\infty}\psi_j\varepsilon_{t-j},
+    \qquad \psi_0=1,\qquad \sum_{j=0}^{\infty}\psi_j^2<\infty,
+\]
+where $\varepsilon_t$ is the one-step innovation: the part of $X_t$ that cannot
+be linearly predicted from its past.
+\end{thm}
+
+``Purely nondeterministic'' rules out a nonzero component perfectly predictable
+from the infinite past. Wold's theorem explains why linear filters of innovations
+are fundamental: they are not merely a convenient parametric guess. ARMA models
+replace the infinite filter $\sum_j\psi_jz^j$ by the parsimonious rational
+approximation $\theta(z)/\phi(z)$.
+
+The ACF and partial ACF (PACF) provide a useful first diagnostic. The PACF at lag
+$h$ measures the remaining linear association between $X_t$ and $X_{t-h}$ after
+accounting for the intermediate lags. In ideal population models,
+\[
+\begin{array}{c|ccc}
+ & \operatorname{AR}(p) & \operatorname{MA}(q) & \operatorname{ARMA}(p,q)\\
+\hline
+\text{ACF}  & \text{tails off} & \text{cuts off after }q & \text{tails off}\\
+\text{PACF} & \text{cuts off after }p & \text{tails off} & \text{tails off}
+\end{array}
+\]
+This pattern suggests candidate orders; it does not prove that a model is
+correct. After fitting, the estimated innovations should resemble white noise.
+Visible autocorrelation in the residuals means that predictable structure remains.
+Among models with adequate residuals, criteria such as AIC or BIC trade improved
+fit against unnecessary order.
+
+\subsubsection{Nonstationarity and hidden state}
+ARMA models describe stationary series. For a series whose differences are
+stationary, an $\operatorname{ARIMA}(p,d,q)$ model is
+\[
+    \phi(B)(1-B)^dX_t=\theta(B)\varepsilon_t.
+\]
+The random walk is $\operatorname{ARIMA}(0,1,0)$. Seasonal differencing replaces
+$1-B$ by $1-B^s$ when a pattern repeats every $s$ observations. Differencing is
+not a ritual: it asserts that changes are stable even when levels are not. Too
+much differencing injects artificial dependence and increases forecast variance,
+so one should use the smallest $d$ that makes a stationary description plausible.
+
+Another viewpoint separates an unobserved state from noisy measurements:
+\[
+\begin{aligned}
+    Z_{t+1}&=AZ_t+\eta_{t+1}, &&\text{state evolution},\\
+    X_t&=CZ_t+\varepsilon_t, &&\text{observation}.
+\end{aligned}
+\]
+In a linear Gaussian state space model, the Kalman filter alternates between
+predicting $Z_t$ from the previous state and correcting that prediction using the
+new forecast error $X_t-C\widehat{Z}_{t\mid t-1}$. The model distinguishes
+uncertainty about a changing signal from measurement noise. ARMA models admit
+state space representations, but the state space language also naturally handles
+missing observations, time-varying latent trends, and multivariate signals.
+
+\subsubsection{CNNs and RNNs as time-series models}
+Classical models make their memory explicit and linear. Neural models can learn
+nonlinear summaries of the past, but the same design question remains: what part
+of $\mathcal{F}_t$ should be retained?
+
+A one-dimensional \textbf{causal convolutional network} begins with filters such as
+\[
+    H_t=\sigma\!\left(b+\sum_{j=0}^{k-1}W_jX_{t-j}\right).
+\]
+With the identity activation, this is simply a finite linear filter. Nonlinear
+activations and stacked filters learn local motifs; dilation allows a large time
+window without an equally deep network. Shared weights encode the belief that a
+pattern has the same meaning wherever it appears in time.
+
+A \textbf{recurrent neural network} instead updates a learned state,
+\[
+    H_t=\sigma(UH_{t-1}+VX_t+b),
+    \qquad
+    \widehat{X}_{t+h\mid t}=g(H_t).
+\]
+The hidden state is a nonlinear, data-adaptive analogue of a state space model.
+If the activation is the identity and the powers of $A$ decay, then
+$H_t$ becomes an infinite linear filter of past observations. Thus CNNs resemble
+finite impulse response filters, while stable RNNs resemble infinite impulse
+response or state space models.
+
+\begin{center}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.16\textwidth}
+                >{\raggedright\arraybackslash}p{0.25\textwidth}
+                >{\raggedright\arraybackslash}p{0.25\textwidth}
+                >{\raggedright\arraybackslash}p{0.22\textwidth}}
+\toprule
+Model & Memory & Main advantage & Main caution\\
+\midrule
+ARMA & Explicit linear recursion and shocks & Interpretable, data-efficient, probabilistic forecasts & Requires approximately stationary linear dynamics\\
+CNN & Finite local or dilated window & Parallel computation and multiscale pattern detection & Receptive field must cover the relevant history\\
+RNN & Learned recursive hidden state & Flexible nonlinear state and variable effective memory & Harder optimization, diagnosis, and uncertainty quantification\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+CNNs and RNNs are useful examples, not automatic replacements for ARMA. A flexible
+model can fit dependence that is too weak to estimate reliably from a single
+series. It should therefore be compared with simple forecasts, evaluated only on
+future observations, and judged by calibration as well as point accuracy. The
+essential question is unchanged: after conditioning on the model's summary of the
+past, is there any predictable structure left in the forecast errors?
