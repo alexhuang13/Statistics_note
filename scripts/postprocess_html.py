@@ -198,6 +198,27 @@ def convert_theorem_boxes(fragment: str) -> str:
         cursor = closing.end()
     return "".join(output)
 
+def style_contingency_tables(fragment: str) -> str:
+    """Restore the contingency diagram's emphasis after TeX4ht drops cell colors."""
+    def transform_table(match):
+        table = match.group(0)
+        if not all(label in strip_tags(table) for label in ("Group", "Category", "Row total", "Column total")):
+            return table
+        table = table.replace("class='tabular'", "class='tabular contingency-table'", 1)
+        # Booktabs partial rules can become empty rows in the HTML conversion.
+        table = re.sub(r"<tr\b[^>]*>.*?</tr>",
+                       lambda row: row.group(0) if strip_tags(row.group(0)) else "",
+                       table, flags=re.S)
+        def highlight_cell(cell_match):
+            cell = cell_match.group(0)
+            cell, count = re.subn(r"\\textcolor\s*\{AccentInk\}\{(y_\{jk\})\}", r"\1", cell)
+            if count:
+                cell = cell.replace("class='", "class='focus-cell ", 1)
+            return cell
+        return re.sub(r"<td\b[^>]*>.*?</td>", highlight_cell, table, flags=re.S)
+    return re.sub(r"<table\b[^>]*class='tabular'[^>]*>.*?</table>",
+                  transform_table, fragment, flags=re.S)
+
 def transform_content(fragment: str) -> str:
     # Remove TeX4ht's generated previous/up/next controls; the site adds its own.
     fragment = re.sub(r"<div class='crosslinks'>.*?</div>", "", fragment, flags=re.S)
@@ -208,6 +229,7 @@ def transform_content(fragment: str) -> str:
     fragment = fragment.replace("class='SourceSans3-Regular-tlf-t1-'", "class='web-sans'")
     fragment = re.sub(r"class='zpl-(Bold|Italic|Regular)[^']*'", lambda m: "class='web-bold'" if m.group(1)=="Bold" else ("class='web-italic'" if m.group(1)=="Italic" else "class='web-serif'"), fragment)
     fragment = fragment.replace("__________________________________________________", "").replace("_____", "")
+    fragment = style_contingency_tables(fragment)
     return expand_math_in_html(fragment)
 
 def nav_html(items: list[NavItem], current: str, prefix="") -> str:
@@ -334,7 +356,7 @@ for idx, item in enumerate(flat_pages):
                      nav=nav_html(parts, filename), toc=toc, prev=prev_item, next=next_item)
     (OUT / filename).write_text(html_doc, encoding="utf-8")
     text = strip_tags(content)
-    search_index.append({"title": f"{item.number} {item.title}".strip(), "url": item.url, "text": text[:12000]})
+    search_index.append({"title": f"{item.number} {item.title}".strip(), "url": item.url, "text": text})
 
 part_cards = []
 for i, part in enumerate(parts, 1):

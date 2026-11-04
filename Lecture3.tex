@@ -911,3 +911,396 @@ series. It should therefore be compared with simple forecasts, evaluated only on
 future observations, and judged by calibration as well as point accuracy. The
 essential question is unchanged: after conditioning on the model's summary of the
 past, is there any predictable structure left in the forecast errors?
+
+\clearpage
+\subsection{Exercises}
+\label{sec:classical-model-exercises}
+
+\subsubsection*{(A) Leverage Scores}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{(A) Leverage Scores}
+\label{ex:leverage-scores}
+
+Observations at different locations in predictor space can play different roles
+in a least-squares fit. If we perturb a single response $y_i$, how much does its
+fitted value $\hat y_i$ change? Understanding this sensitivity helps us assess
+how strongly an observation can pull the fitted model toward itself. Leverage
+scores connect this question to the geometry of the design matrix.
+
+Let $\bX\in\mathbb R^{N\times P}$ have full column rank, with $i$-th row
+$\bx_i^\top$. Consider the ordinary least-squares estimator and fitted responses
+\[
+    \hat{\boldsymbol\beta}
+    =(\bX^\top\bX)^{-1}\bX^\top\bY,
+    \qquad
+    \hat{\bY}=\bX\hat{\boldsymbol\beta}.
+\]
+Define the \textbf{hat matrix}
+\[
+    \mathbf H=\bX(\bX^\top\bX)^{-1}\bX^\top.
+\]
+Its diagonal entry $h_{ii}$ is called the \textbf{leverage score} of observation $i$.
+
+\begin{enumerate}[label=\textcolor{AccentInk}{\sffamily\bfseries A\arabic*.},
+                  ref=A\arabic*,leftmargin=2.65em,labelsep=0.65em,itemsep=1em]
+\item Show that
+\[
+    h_{ii}=\bx_i^\top(\bX^\top\bX)^{-1}\bx_i,
+\]
+and prove that $0\le h_{ii}\le 1$.
+
+\item Holding $\bX$ and all other responses fixed, prove that
+\[
+    \frac{\partial\hat y_i}{\partial y_i}=h_{ii}.
+\]
+Interpret this identity: when $y_i$ is increased by a small amount, how does
+$\hat y_i$ change? What does a leverage score close to $1$ mean?
+
+\item \textbf{(Leave-one-out regression)}
+Let $\hat{\boldsymbol\beta}_{[-i]}$ denote the least-squares estimator obtained
+after removing observation $i$:
+\[
+    \hat{\boldsymbol\beta}_{[-i]}
+    =\operatorname*{argmin}_{\boldsymbol\beta\in\mathbb R^P}
+    \sum_{k\ne i}(y_k-\bx_k^\top\boldsymbol\beta)^2.
+\]
+For A3--A4, assume that the design matrix remains of full column rank after
+removing observation $i$. Writing
+$\hat\epsilon_i=y_i-\bx_i^\top\hat{\boldsymbol\beta}$, prove that
+\[
+    \hat{\boldsymbol\beta}_{[-i]}
+    =\hat{\boldsymbol\beta}
+    -\frac{(\bX^\top\bX)^{-1}\bx_i}{1-h_{ii}}\,\hat\epsilon_i.
+\]
+Discuss the roles of the leverage score and the training residual in this
+expression. Does a large leverage score alone imply a large change in the
+estimated coefficients?
+
+\item \textbf{(Residuals)}
+Define the leave-one-out prediction residual
+\[
+    \hat\epsilon_{[-i]}:=y_i-\bx_i^\top\hat{\boldsymbol\beta}_{[-i]}.
+\]
+Using A3, show that
+\[
+    \hat\epsilon_{[-i]}=\frac{\hat\epsilon_i}{1-h_{ii}}.
+\]
+Explain why a small training residual need not imply a small leave-one-out
+prediction error. How does the leverage score affect the discrepancy between
+these two residuals?
+
+\newpage
+\item \textbf{(Variance inflation factor)}
+We now turn from the role of individual observations to the relationships among
+predictors. Assume
+\[
+    \bY=\bX\boldsymbol\beta+\boldsymbol\epsilon,
+    \qquad
+    \mathbb E[\boldsymbol\epsilon\mid\bX]=\mathbf0,
+    \qquad
+    \operatorname{Cov}(\boldsymbol\epsilon\mid\bX)=\sigma^2\bI_N.
+\]
+Derive $\operatorname{Cov}(\hat{\boldsymbol\beta}\mid\bX)$.
+
+Suppose that $\bX$ includes an intercept. For a non-intercept predictor $j$, let
+$R_j^2$ be the coefficient of determination obtained by regressing that predictor
+on all remaining predictors, including the intercept. Show that
+\[
+    \operatorname{Var}(\hat\beta_j\mid\bX)
+    =\frac{\sigma^2}{\sum_{i=1}^N(x_{ij}-\bar x_j)^2}
+     \cdot\frac{1}{1-R_j^2},
+    \qquad
+    \bar x_j=\frac1N\sum_{i=1}^N x_{ij}.
+\]
+The quantity
+\[
+    \operatorname{VIF}_j:=\frac{1}{1-R_j^2}
+\]
+is called the \textbf{variance inflation factor}. Explain its interpretation by
+comparing with $R_j^2=0$, holding $\sigma^2$ and the variation of predictor $j$
+fixed. What happens as $R_j^2\to1$, and why does near linear dependence among
+predictors make individual coefficients difficult to estimate?
+\end{enumerate}
+
+\subsubsection*{(B) AIC and BIC}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{(B) AIC and BIC}
+\label{ex:aic-bic}
+
+Adding predictors can reduce training error, but how much improvement justifies
+a more complicated model? We explore this question through leave-one-out
+prediction and through averaging the likelihood over a prior.
+
+Consider candidate Gaussian linear models
+\[
+    M_p:\quad \bY\mid\boldsymbol\beta,\sigma^2
+    \sim\mathcal N(\bX_p\boldsymbol\beta,\sigma^2\bI_N),
+    \qquad \boldsymbol\beta\in\mathbb R^p,
+\]
+where $\bX_p\in\mathbb R^{N\times p}$ is fixed and has full column rank.
+All models use the same $N$ responses; $p<N$ counts all regression coefficients,
+including an intercept if present, and $\sigma^2$ is unknown. Write
+$\operatorname{RSS}_p=\sum_{i=1}^N\hat\epsilon_i^2$ and let
+$\ell_p(\boldsymbol\beta,\sigma^2)$ denote the log-likelihood. Residuals and
+leverage scores refer to $M_p$, and conditioning on $\bX_p$ is suppressed.
+
+\begin{enumerate}[label=\textcolor{AccentInk}{\sffamily\bfseries B\arabic*.},
+                  ref=B\arabic*,leftmargin=2.65em,labelsep=0.65em,itemsep=1em]
+\item Assume that deleting any observation preserves full column rank.
+Using A4, express
+\[
+    \log\!\left(\sum_{i=1}^N\hat\epsilon_{[-i]}^2\right)
+\]
+in terms of the full-sample residuals and leverage scores. Prove that
+$\sum_{i=1}^N h_{ii}=p$.
+
+\item Suppose that $h_{ii}=p/N$ for every $i$. Simplify your expression in B1
+and, for $p/N\to0$, expand
+\[
+    N\log\!\left(\frac1N\sum_{i=1}^N\hat\epsilon_{[-i]}^2\right)
+\]
+through the first-order correction to $N\log(\operatorname{RSS}_p/N)$.
+What penalty for model complexity appears? Bound the remainder.
+Why is $\sum_i h_{ii}=p$ alone insufficient for this calculation when the
+leverage scores are unequal?
+
+\item Calculate the maximum-likelihood estimates and the maximized Gaussian
+log-likelihood. Rewrite the leading criterion from B2 using this log-likelihood
+and the number of estimated parameters. Identify the result as
+\textbf{Akaike's information criterion (AIC)}~\cite{akaike1974newlook}.
+Why does counting the unknown variance add a term common to all models?
+
+\item Choose a proper prior on the coefficients and noise variance. For
+example, take
+\[
+    \boldsymbol\beta\mid\sigma^2,M_p
+    \sim\mathcal N(\mathbf0,\tau^2\sigma^2\bI_p),
+    \qquad
+    \sigma^2\mid M_p\sim\operatorname{Inv\text{-}Gamma}(a,b),
+\]
+with $a,b,\tau>0$ fixed independently of $N$ and of the observed responses.
+Here $\pi_{\sigma^2}(s)=b^a s^{-a-1}\exp(-b/s)/\Gamma(a)$ for $s>0$.
+Complete the square to calculate
+\[
+    p(\bY\mid s,M_p)
+    =\int_{\mathbb R^p}p(\bY\mid\boldsymbol\beta,s,M_p)
+      \pi_{\boldsymbol\beta}(\boldsymbol\beta\mid s,M_p)
+      \,\mathrm d\boldsymbol\beta.
+\]
+Keep all normalizing constants that depend on $p$.
+
+\item Integrate the expression in B4 over $s$ to obtain
+$\log p(\bY\mid M_p)$. For fixed $p$, suppose that
+\[
+    \frac1N\bX_p^\top\bX_p\longrightarrow Q_p\succ0,
+    \qquad \hat{\boldsymbol\beta}_p=O_{\mathbb P}(1),
+    \qquad \frac{\operatorname{RSS}_p}{N}
+       \xrightarrow{\mathbb P}c_p>0.
+\]
+Using Stirling's formula, expand the log marginal likelihood around the maximized
+log-likelihood, with remainder $O_{\mathbb P}(1)$. Determine the coefficient of
+$\log N$ and explain where it comes from.
+
+\item Retain the leading terms of $-2\log p(\bY\mid M_p)$ and remove terms
+common to all models. Write the resulting model-selection criterion in terms of
+$\operatorname{RSS}_p$, $N$, and $p$. Identify it as the
+\textbf{Bayesian information criterion (BIC)}~\cite{schwarz1978dimension}.
+Which terms of the marginal-likelihood expansion depend on the prior?
+Compare the complexity penalty and motivation with the criterion in B3.
+\end{enumerate}
+
+\subsubsection*{(C) Heteroscedasticity}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{(C) Heteroscedasticity}
+\label{ex:heteroscedasticity}
+
+The conditional variance of a response can change with its predictors. For
+binary and count data, this variation arises naturally from the response
+distribution. How do these unequal variances enter the curvature of the
+log-likelihood, and how can we estimate that curvature from a fitted model?
+
+Let $\bX\in\mathbb R^{N\times P}$ have full column rank, with rows
+$\bx_i^\top$. Conditional on $\bX$, suppose that the responses are independent
+and follow a regular exponential family with unit dispersion:
+\[
+    f(y_i;\eta_i)=\exp\!\bigl\{y_i\eta_i-b(\eta_i)+c(y_i)\bigr\},
+    \qquad \eta_i=\bx_i^\top\boldsymbol\beta.
+\]
+Setting the natural parameter equal to the linear predictor is the
+\textbf{canonical link} specification. Write $\ell(\boldsymbol\beta)$ for the
+log-likelihood, and assume that a finite interior maximum-likelihood estimate
+$\hat{\boldsymbol\beta}$ exists.
+
+\begin{enumerate}[label=\textcolor{AccentInk}{\sffamily\bfseries C\arabic*.},
+                  ref=C\arabic*,leftmargin=2.65em,labelsep=0.65em,itemsep=1em]
+\item \textbf{(Estimating the Hessian)}
+Express $\mathbb E[Y_i\mid\bX]$ and $\operatorname{Var}(Y_i\mid\bX)$ in terms
+of derivatives of $b$. Derive the score vector and prove that
+\[
+    \nabla_{\boldsymbol\beta}^2\ell(\boldsymbol\beta)
+    =-\bX^\top\mathbf W(\boldsymbol\beta)\bX,
+    \qquad
+    \mathbf W(\boldsymbol\beta)
+    =\operatorname{Cov}_{\boldsymbol\beta}(\bY\mid\bX).
+\]
+Construct plug-in estimates of $\mathbf W$ and the Hessian using
+$\hat{\boldsymbol\beta}$. Under correct specification and standard regularity
+conditions, derive the corresponding large-sample covariance estimator for
+$\hat{\boldsymbol\beta}$.
+
+\item \textbf{(Logistic regression)}
+Suppose that
+\[
+    Y_i\mid\bX\sim\operatorname{Bernoulli}(\pi_i),
+    \qquad \log\!\left(\frac{\pi_i}{1-\pi_i}\right)
+       =\bx_i^\top\boldsymbol\beta.
+\]
+Identify $b$, and calculate $\mathbf W(\boldsymbol\beta)$ and the Hessian.
+Write their fitted versions in terms of
+$\hat\pi_i=(1+\exp(-\bx_i^\top\hat{\boldsymbol\beta}))^{-1}$.
+For fixed $\bx_i$, at which value of $\pi_i$ does observation $i$ contribute
+the most information about $\boldsymbol\beta$? What happens as $\pi_i$
+approaches $0$ or $1$?
+
+\item \textbf{(Poisson regression)}
+Suppose that
+\[
+    Y_i\mid\bX\sim\operatorname{Poisson}(\mu_i),
+    \qquad \log\mu_i=\bx_i^\top\boldsymbol\beta.
+\]
+Identify $b$, and calculate $\mathbf W(\boldsymbol\beta)$ and the Hessian.
+Write their fitted versions in terms of
+$\hat\mu_i=\exp(\bx_i^\top\hat{\boldsymbol\beta})$.
+For fixed $\bx_i$, how does observation $i$'s contribution to the information
+about $\boldsymbol\beta$ change as $\mu_i$ increases? Explain why unequal
+conditional variances can arise even when this model is correctly specified.
+\end{enumerate}
+
+\subsubsection*{(D) Contingency Tables}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{(D) Contingency Tables}
+\label{ex:contingency-tables}
+
+Do different groups have the same distribution across a set of categories?
+A contingency table records the relevant counts, but the sampling design
+determines which totals are fixed and which are random. We will connect two
+sampling schemes and discover how likelihood comparisons and local curvature
+lead to two familiar tests of association.
+
+Let $Y_{jk}$ be the count in cell $(j,k)$ of a $J\times K$ table, with
+$J,K\ge2$. The observed table $y=(y_{jk})$ and its margins are arranged as
+follows:
+\begin{center}
+\begingroup
+\setlength{\tabcolsep}{12pt}
+\renewcommand{\arraystretch}{1.22}
+\begin{tabular}{lccccc>{\columncolor{AccentWash}}c}
+\toprule
+\textsf{Group} & \multicolumn{5}{c}{\textsf{Category}} & \textsf{Row total}\\
+\cmidrule(lr){2-6}
+ & $1$ & $\cdots$ & $k$ & $\cdots$ & $K$ & \\
+\midrule
+$1$ & $y_{11}$ & $\cdots$ & $y_{1k}$ & $\cdots$ & $y_{1K}$ & $n_1=y_{1+}$\\
+$\vdots$ & $\vdots$ & & $\vdots$ & & $\vdots$ & $\vdots$\\
+$j$ & $y_{j1}$ & $\cdots$ & \cellcolor{AccentWash}$\textcolor{AccentInk}{y_{jk}}$
+    & $\cdots$ & $y_{jK}$ & $n_j=y_{j+}$\\
+$\vdots$ & $\vdots$ & & $\vdots$ & & $\vdots$ & $\vdots$\\
+$J$ & $y_{J1}$ & $\cdots$ & $y_{Jk}$ & $\cdots$ & $y_{JK}$ & $n_J=y_{J+}$\\
+\midrule
+\rowcolor{AccentWash}
+\textsf{Column total} & $y_{+1}$ & $\cdots$ & $y_{+k}$ & $\cdots$ & $y_{+K}$
+    & $N=y_{++}$\\
+\bottomrule
+\end{tabular}
+\endgroup
+\end{center}
+Here $n_j=y_{j+}=\sum_{k=1}^K y_{jk}$,
+$y_{+k}=\sum_{j=1}^J y_{jk}$, and $N=y_{++}=\sum_{j,k}y_{jk}$.
+Assume that all observed row and column totals are positive. Individual cells
+may be zero; use the convention $0\log(0/u)=0$ for $u>0$, and allow saturated
+maximum-likelihood fits on the boundary.
+
+\begin{enumerate}[label=\textcolor{AccentInk}{\sffamily\bfseries D\arabic*.},
+                  ref=D\arabic*,leftmargin=2.65em,labelsep=0.65em,itemsep=1em]
+\item \textbf{(Two sampling schemes)}
+Under \emph{Poisson sampling}, the cell counts are independent with
+$Y_{jk}\sim\operatorname{Poisson}(\mu_{jk})$.
+Under \emph{product multinomial sampling}, the rows are independent with
+\[
+    (Y_{j1},\ldots,Y_{jK})
+    \sim\operatorname{Multinomial}(n_j;p_{j1},\ldots,p_{jK}),
+    \qquad \sum_{k=1}^K p_{jk}=1,
+\]
+where each $n_j$ is fixed by design. Write both likelihoods. Which totals are
+random in each model? Are the cell counts within a row independent under the
+second model?
+
+\item \textbf{(Conditioning and profiling)}
+In the Poisson model, write $\mu_{jk}=a_jp_{jk}$ with $a_j>0$ and
+$\sum_kp_{jk}=1$. Factor the joint likelihood into a likelihood for the row
+totals and a conditional likelihood for the counts given those totals.
+Identify the conditional model. Maximize over $a_1,\ldots,a_J$ and show that
+the resulting profile likelihood for $p=(p_{jk})$ is proportional to the
+product multinomial likelihood, with a factor independent of $p$.
+
+\item \textbf{(No association)}
+Under $H_0:p_{jk}=q_k$ for every $j$, with $\sum_kq_k=1$, show that the
+Poisson log-means satisfy $\log\mu_{jk}=\alpha_j+\beta_k$.
+Explain the connection to independence of the row and column categories.
+Find the saturated and null fits under each sampling scheme. Express the
+null fitted counts $\widetilde\mu_{jk}$ (Poisson) and $n_j\widetilde p_{jk}$
+(product multinomial) using the observed margins, and show that they agree.
+
+\item \textbf{(Comparing likelihoods)}
+For each sampling scheme, calculate
+\[
+    G^2=2\left\{\sup_{\mathrm{saturated}}\ell
+                    -\sup_{H_0}\ell\right\},
+\]
+where the saturated model allows a separate parameter for each cell, subject
+only to the probability normalizations when applicable. Simplify $G^2$ in
+terms of $y_{jk}$ and $\widetilde\mu_{jk}$. Why do the linear terms in the
+Poisson expression cancel? Use D2 to explain why the two sampling schemes
+give the same statistic. Identify the result as the
+\textbf{likelihood-ratio deviance statistic}.
+
+\item \textbf{(A local calculation)}
+Parameterize the saturated Poisson model by
+$\theta_{jk}=\log\mu_{jk}$, and collect these parameters in a vector
+$\boldsymbol\theta$. Using C3, calculate its score
+$U(\boldsymbol\theta)$ and expected Fisher information
+$I(\boldsymbol\theta)$. At the null fit
+$\widetilde\theta_{jk}=\log\widetilde\mu_{jk}$, simplify the score statistic
+\[
+    X^2=U(\widetilde{\boldsymbol\theta})^\top
+        I(\widetilde{\boldsymbol\theta})^{-1}
+        U(\widetilde{\boldsymbol\theta}).
+\]
+Identify the result as \textbf{Pearson's chi-square statistic}.
+Why can the full-model score be nonzero even though the scores for the null
+model's parameters vanish at their fitted values? Using the factorization
+in D2, show that the product multinomial score test gives the same statistic.
+
+\item \textbf{(Counting the remaining directions)}
+For each sampling scheme, count the dimensions of the saturated and null
+models. Explain why the dimension differences agree. Show that the fitted
+residuals $y_{jk}-\widetilde\mu_{jk}$ have zero row sums and zero column sums;
+how many independent constraints does this impose?
+
+Under $H_0$, keep $J,K$ fixed and take $q_k>0$. For product multinomial
+sampling, let $N\to\infty$ with $n_j/N\to r_j>0$; for Poisson sampling,
+take $a_j=t r_j$ with $t\to\infty$, $r_j>0$, and $\sum_jr_j=1$.
+Use likelihood theory to obtain the limiting null distributions of $G^2$
+and $X^2$, including their degrees of freedom. Explain why the number of
+cells alone does not determine those degrees of freedom.
+
+\item \textbf{(Two views of the same local discrepancy)}
+Under the null and the asymptotic conditions in D6, expand the expression
+for $G^2$ from D4 around $y_{jk}=\widetilde\mu_{jk}$. Use the margin
+identities to remove the linear terms and prove that
+\[
+    G^2-X^2=o_{\mathbb P}(1).
+\]
+What does this reveal about the relation between likelihood-ratio and score
+tests? Are the two statistics necessarily equal for a finite observed table?
+\end{enumerate}

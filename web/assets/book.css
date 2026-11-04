@@ -176,7 +176,7 @@ button, input { font: inherit; }
 .document-page .subsectionHead { font-size: clamp(27px, 3.7vw, 39px); }
 .document-page .partHead { font-size: clamp(32px, 4.7vw, 48px); text-align: left; }
 .document-page .titlemark { display: block; margin-bottom: 9px; color: var(--blue-ink); font-size: .38em; letter-spacing: .08em; }
-.document-page .subsubsectionHead {
+.document-page .subsubsectionHead, .document-page .likesubsubsectionHead {
   margin: 2.25em 0 .7em;
   color: var(--ink);
   font: 700 22px/1.3 "Trebuchet MS", Arial, sans-serif;
@@ -213,6 +213,16 @@ table { max-width: 100%; border-collapse: collapse; }
 .document-page .tabular { max-width: 100%; margin: 1.5em 0; overflow-x: auto; }
 .document-page table.tabular { margin: 0 auto; }
 .document-page table.tabular td { padding: .55em .75em; border-color: var(--line); }
+.document-page table.contingency-table {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.document-page table.contingency-table tr:nth-child(2) td,
+.document-page table.contingency-table tr:last-child td { border-top: 1px solid var(--line); }
+.document-page table.contingency-table td:last-child,
+.document-page table.contingency-table tr:last-child td,
+.document-page table.contingency-table .focus-cell { background: var(--blue-wash); }
+.document-page table.contingency-table .focus-cell .MathJax { color: var(--blue-ink); }
 
 .theorem-card {
   position: relative;
