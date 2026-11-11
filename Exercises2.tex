@@ -1,0 +1,234 @@
+\clearpage
+\subsection{Exercises}
+\label{sec:parameter-estimation-exercises}
+
+\subsubsection*{(A) James--Stein versus Least Squares}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{(A) James--Stein versus Least Squares}
+\label{ex:james-stein}
+
+Least squares estimates each normal mean by its observed value. Can we improve on this natural rule
+by shrinking the coordinates together, even when the true means are unrelated? The challenge is to
+compare risks without knowing the means. We first construct an unbiased estimate of risk, then use it to
+show that James--Stein estimation improves on least squares at every parameter value.
+
+Let $X\sim\mathcal N_n(\theta,I_n)$, where $\theta\in\mathbb R^n$ is unknown. Measure the risk of an estimator by its total mean squared error,
+\[
+ R(\theta,\hat\theta)=\mathbb E_\theta\bigl[\|\hat\theta(X)-\theta\|_2^2\bigr].
+\]
+The least-squares estimator is $\hat\theta_{\mathrm{LS}}(X)=X$.
+
+\begin{enumerate}[label=\textcolor{AccentInk}{\sffamily\bfseries A\arabic*.},ref=A\arabic*,leftmargin=2.65em,labelsep=0.65em,itemsep=1em]
+\item \textbf{(Stein's unbiased risk estimate)} Let $\hat\theta:\mathbb R^n\to\mathbb R^n$ be weakly differentiable, with $\mathbb E_\theta\|\hat\theta(X)\|_2^2<\infty$ and $\mathbb E_\theta|\partial\hat\theta_i(X)/\partial x_i|<\infty$ for each $i$. Define
+\[
+ \operatorname{SURE}(X;\hat\theta)=\|\hat\theta(X)-X\|_2^2+2\sum_{i=1}^n\frac{\partial\hat\theta_i}{\partial x_i}(X)-n.
+\]
+Prove that
+\[
+ \mathbb E_\theta[\operatorname{SURE}(X;\hat\theta)]=\mathbb E_\theta\bigl[\|\hat\theta(X)-\theta\|_2^2\bigr].
+\]
+Why can SURE be computed from the data even though the loss cannot? \emph{Hint:} Expand the squared error and integrate by parts against the Gaussian density.
+
+\item \textbf{(James--Stein dominates least squares)} For $n\ge3$, consider the James--Stein estimator
+\[
+ \hat\theta_{\mathrm{JS}}(X)=\left(1-\frac{n-2}{\|X\|_2^2}\right)X,\qquad X\ne0,
+\]
+with $\hat\theta_{\mathrm{JS}}(0)=0$. Calculate its SURE and use A1 to find the exact risk difference $R(\theta,\hat\theta_{\mathrm{JS}})-R(\theta,\hat\theta_{\mathrm{LS}})$. Deduce that, for every $\theta\in\mathbb R^n$,
+\[
+ R(\theta,\hat\theta_{\mathrm{JS}})<R(\theta,\hat\theta_{\mathrm{LS}})=n.
+\]
+In applying A1, check the regularity at the origin and show that $\mathbb E_\theta[\|X\|_2^{-2}]<\infty$. Where does the condition $n\ge3$ enter the argument?
+\end{enumerate}
+
+\subsubsection*{(B) Bayes Optimal Estimation for Gaussian Models}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{(B) Bayes Optimal Estimation for Gaussian Models}
+\label{ex:gaussian-bayes}
+
+A Gaussian prior lets us combine observations with prior information about the unknown parameter.
+The resulting estimator minimizes average risk under that prior. How does it compare with least squares,
+and which estimator protects us against the worst possible parameter? This problem connects these two
+notions of optimality by making the prior increasingly diffuse.
+
+Under squared error loss, consider the Gaussian linear model and Gaussian prior
+\[
+ X\mid\theta\sim P_\theta=\mathcal N_n(A\theta,\sigma^2 I_n),\qquad
+ \theta\sim Q=\mathcal N_p(0,\Sigma_0),
+\]
+where $A\in\mathbb R^{n\times p}$ is known and has full column rank, $\sigma^2>0$ is known, and $\Sigma_0\succ0$.
+
+\begin{enumerate}[label=\textcolor{AccentInk}{\sffamily\bfseries B\arabic*.},ref=B\arabic*,leftmargin=2.65em,labelsep=0.65em,itemsep=1em]
+\item \textbf{(Bayes optimal estimator)} Find the posterior distribution of $\theta$ given $X$. Use it to derive the Bayes estimator $\hat\theta_Q(X)$ and explain why it minimizes posterior expected squared error. Calculate its Bayes risk $\int_{\mathbb R^p}R(\theta,\hat\theta_Q)\,Q(\mathrm d\theta)$.
+
+\item \textbf{(Least-squares estimator)} Find
+\[
+ \hat\theta_{\mathrm{LS}}(X)=\operatorname*{argmin}_{u\in\mathbb R^p}\|X-Au\|_2^2
+\]
+and calculate $R(\theta,\hat\theta_{\mathrm{LS}})$. Does this risk depend on $\theta$? Show that the estimator in B1 converges to $\hat\theta_{\mathrm{LS}}(X)$ when $\Sigma_0=\tau^2 I_p$ and $\tau\to\infty$.
+
+\item \textbf{(Minimax optimality)} Determine the minimax risk
+\[
+ \inf_{\hat\theta}\sup_{\theta\in\mathbb R^p}R(\theta,\hat\theta)
+\]
+and identify an estimator that attains it. \emph{Hint:} The maximum risk is at least the average risk under any prior. Use B1 with $Q_\tau=\mathcal N_p(0,\tau^2 I_p)$ to obtain a lower bound, then let $\tau\to\infty$ and compare with B2.
+
+Is the Bayes estimator for a fixed $\Sigma_0\succ0$ also minimax over $\mathbb R^p$? Finally, when $A=I_n$ and $\sigma=1$, explain why your minimax conclusion is compatible with the strict improvement in A2.
+\end{enumerate}
+
+\subsubsection*{(C) Tweedie's Theorem}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{(C) Tweedie's Theorem}
+\label{ex:tweedie}
+
+Tweedie's formula recovers the posterior mean from the marginal density of Gaussian observations. A
+second derivative reveals posterior uncertainty, even for a non-Gaussian prior~\cite{efron2011tweedie}.
+
+Let $X\mid\theta\sim\mathcal N_p(\theta,\sigma^2 I_p)$, with known $\sigma^2>0$, and let $\theta\sim Q$ for any prior satisfying $\mathbb E_Q\|\theta\|_2^2<\infty$. Write the marginal density of $X$ as
+\[
+ m(x)=\int_{\mathbb R^p}\phi_\sigma(x-\theta)\,Q(\mathrm d\theta),\qquad
+ \phi_\sigma(z)=\frac{\exp\{-\|z\|_2^2/(2\sigma^2)\}}{(2\pi\sigma^2)^{p/2}}.
+\]
+All gradients and Hessians below are with respect to $x$.
+
+\begin{enumerate}[label=\textcolor{AccentInk}{\sffamily\bfseries C\arabic*.},ref=C\arabic*,leftmargin=2.65em,labelsep=0.65em,itemsep=1em]
+\item \textbf{(Posterior mean from the marginal density)} Differentiate $m(x)$ under the integral sign and use Bayes' rule to prove
+\[
+ \hat\theta_Q(x)=\mathbb E[\theta\mid X=x]=x+\sigma^2\nabla\log m(x).
+\]
+This is Tweedie's formula. Why is it the Bayes optimal estimator under squared error loss? Interpret the direction of the correction $\sigma^2\nabla\log m(x)$.
+
+\item \textbf{(Posterior covariance from curvature)} Differentiate once more and show that
+\[
+ \operatorname{Cov}(\theta\mid X=x)=\sigma^2 I_p+\sigma^4\nabla^2\log m(x).
+\]
+Deduce that $\nabla^2\log m(x)\succeq-\sigma^{-2}I_p$. If $m$ is log-concave, how does the posterior covariance compare with the noise covariance $\sigma^2 I_p$?
+
+\item \textbf{(Returning to the Gaussian prior)} Take $Q=\mathcal N_p(0,\Sigma_0)$ with $\Sigma_0\succ0$. Find $m(x)$ and use C1--C2 to calculate the posterior mean and covariance. Verify that both agree with B1 when $A=I_p$.
+\end{enumerate}
+
+\subsubsection*{(D) Complete Statistics in the Exponential Model}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{(D) Complete Statistics in the Exponential Model}
+\label{ex:exponential-completeness}
+
+Can the sum of observed lifetimes retain all the information about their mean? What does completeness
+add to sufficiency? We will answer these questions and then use the sum to construct an optimal unbiased
+estimator of the probability that a lifetime exceeds a fixed threshold.
+
+Let $X_1,\ldots,X_n$ be independent with common density
+\[
+ f_\theta(x)=\frac1\theta e^{-x/\theta}\mathbf1_{\{x>0\}},\qquad\theta>0,
+\]
+where $n\ge2$ and $\theta$ is the unknown scale parameter. Write $T=\sum_{i=1}^nX_i$ and fix $t_0>0$.
+
+\begin{enumerate}[label=\textcolor{AccentInk}{\sffamily\bfseries D\arabic*.},ref=D\arabic*,leftmargin=2.65em,labelsep=0.65em,itemsep=1em]
+\item \textbf{(Sufficiency and the distribution of the sum)} Write the joint density and show that $T$ is sufficient for $\theta$. Use the likelihood-ratio characterization to prove that it is minimal sufficient. Find the density of $T$, including its normalizing constant.
+
+\item \textbf{(Completeness)} Suppose a measurable function $g$ satisfies
+\[
+ \mathbb E_\theta|g(T)|<\infty,\qquad\mathbb E_\theta[g(T)]=0\quad\text{for every }\theta>0.
+\]
+Use the density from D1 to prove that $g(T)=0$ almost surely for every $\theta>0$. Conclude that $T$ is complete. \emph{Hint:} Set $s=1/\theta$ and use uniqueness of the Laplace transform.
+
+\item \textbf{(Conditioning on the total)} Find the conditional density of $X_1$ given $T=t$. Hence calculate
+\[
+ \mathbb P_\theta(X_1>t_0\mid T=t)
+\]
+for every $t>0$, treating $t\le t_0$ and $t>t_0$ separately. Why does the conditional distribution not involve $\theta$?
+
+\item \textbf{(From completeness to optimal unbiased estimation)} Show that $\mathbf1_{\{X_1>t_0\}}$ is unbiased for $e^{-t_0/\theta}$. Use D3 to write its Rao--Blackwell improvement explicitly as a function of $T$. Prove that the resulting estimator is the unique UMVUE of $e^{-t_0/\theta}$ and has strictly smaller variance than $\mathbf1_{\{X_1>t_0\}}$. Explain the different roles of sufficiency and completeness in this argument.
+\end{enumerate}
+
+\subsubsection*{(E) Pinsker's Linear Minimax Theorem}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{(E) Pinsker's Linear Minimax Theorem}
+\label{ex:pinsker-linear-minimax}
+
+An ellipsoid gives different directions different signal budgets. How should a linear estimator shrink
+each direction to minimize its worst-case risk? Following Lectures 16--17~\cite{wei2026stat9700}, we first construct an upper
+bound, then turn a quadratic maximization into a Gaussian Bayes problem to obtain a matching lower
+bound.
+
+Observe $X=\theta+\sigma Z$, where $Z\sim\mathcal N_d(0,I_d)$ and $\sigma>0$ is known. For a known positive definite matrix $A$, define
+\[
+ \Theta(A)=\{\theta\in\mathbb R^d:\theta^\top A\theta\le1\},\qquad
+ R_L(\Theta(A))=\inf_{M\in\mathbb R^{d\times d}}\sup_{\theta\in\Theta(A)}R(\theta,MX),
+\]
+where $R(\theta,\hat\theta)=\mathbb E_\theta\|\hat\theta-\theta\|_2^2$. The infimum is over all deterministic linear maps, including those that mix coordinates. Write $(u)_+=\max\{u,0\}$.
+
+\begin{enumerate}[label=\textcolor{AccentInk}{\sffamily\bfseries E\arabic*.},ref=E\arabic*,leftmargin=2.65em,labelsep=0.65em,itemsep=1em]
+\item \textbf{(Rotation and quadratic risk)} Show that an orthogonal change of coordinates preserves the model, the loss, and the class of linear estimators. Hence we may assume from now on that $A=\operatorname{diag}(a_1^2,\ldots,a_d^2)$ with $a_i>0$. Prove that, for any matrix $M$,
+\[
+ R(\theta,MX)=\|(M-I_d)\theta\|_2^2+\sigma^2\|M\|_F^2.
+\]
+
+\newpage
+\item \textbf{(Upper bound: controlling the worst bias)} For a diagonal rule $\hat\theta_i=m_iX_i$, show that the maximum squared bias over $\Theta(A)$ is $\max_i(1-m_i)^2/a_i^2$. For a fixed $\lambda\ge0$, minimize the variance subject to this bias being at most $\lambda^2$. Show that the resulting weights are $m_i=(1-\lambda a_i)_+$, and deduce
+\[
+ R_L(\Theta(A))\le\inf_{\lambda\ge0}F(\lambda),\qquad
+ F(\lambda)=\lambda^2+\sigma^2\sum_{i=1}^d(1-\lambda a_i)_+^2.
+\]
+
+\item \textbf{(Choosing the cutoff)} Show that $F$ has a unique minimizer $\lambda_*>0$, characterized by
+\[
+ \lambda_*=\sigma^2\sum_{i=1}^d a_i(1-\lambda_*a_i)_+.
+\]
+Why does this equation have exactly one positive solution? Let $w_i=(1-\lambda_*a_i)_+$ and $M_*=\operatorname{diag}(w_1,\ldots,w_d)$.
+
+\item \textbf{(An exact semidefinite relaxation)} For any symmetric $D\succeq0$, prove that
+\[
+ \sup_{\theta^\top A\theta\le1}\theta^\top D\theta
+ =\max_{\substack{\Sigma\succeq0\\\operatorname{tr}(A\Sigma)\le1}}\operatorname{tr}(D\Sigma)
+ =\lambda_{\max}(A^{-1/2}DA^{-1/2}).
+\]
+Replacing $\theta\theta^\top$ by $\Sigma\succeq0$ drops a rank constraint. Why is there nevertheless no gap? Exhibit a rank-one maximizing $\Sigma$. \emph{Hint:} Set $H=A^{1/2}\Sigma A^{1/2}$ and use a top eigenvector.
+
+\item \textbf{(Lower bound: a Gaussian Bayes problem)} Use E4 to express the worst-case risk of each fixed $MX$ as the maximum of its average risk under Gaussian priors $\mathcal N_d(0,\Sigma)$ satisfying $\operatorname{tr}(A\Sigma)\le1$. Then apply $\inf\sup\ge\sup\inf$ and B1 to show that
+\[
+ R_L(\Theta(A))\ge\max_{\substack{\Sigma\succeq0\\\operatorname{tr}(A\Sigma)\le1}}\operatorname{tr}\bigl[\sigma^2\Sigma(\Sigma+\sigma^2I_d)^{-1}\bigr].
+\]
+Explain why minimizing the average risk over linear rules gives the full Bayes risk here. Allow singular $\Sigma$, interpreting zero-variance directions as point masses.
+
+\item \textbf{(Matching the two bounds)} Consider the diagonal covariance matrix
+\[
+ \Sigma_* =\operatorname{diag}(v_1^*,\ldots,v_d^*),\qquad
+ v_i^*=\sigma^2\left(\frac1{\lambda_*a_i}-1\right)_+.
+\]
+Use E3 to show that $\operatorname{tr}(A\Sigma_*)=1$. Calculate its Bayes estimator and show that its Bayes risk is $\sigma^2\sum_iw_i=F(\lambda_*)$. Conclude that the lower bound in E5 matches the upper bound in E2. \emph{Hint:} Use $w_i^2+\lambda_*a_iw_i=w_i$.
+
+\item \textbf{(Identifying the theorem and its scope)} State the exact value of $R_L(\Theta(A))$ and an estimator attaining it. Identify the result as Pinsker's linear minimax theorem and $M_*X$ as the Pinsker estimator. How does $a_i$ determine whether a coordinate is shrunk or discarded? The Gaussian prior in E6 is not supported on $\Theta(A)$. Explain why it still yields a valid lower bound for linear estimators, and why this argument does not establish minimaxity among all measurable estimators.
+\end{enumerate}
+
+\clearpage
+\subsubsection*{(F) Application of Pinsker's theorem}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{(F) Application of Pinsker's theorem}
+\label{ex:pinsker-application}
+
+For each $n\ge2$, observe the Gaussian sequence
+\[
+ X_i=\theta_i+\frac1{\sqrt n}Z_i,\qquad i=1,\ldots,d_n,
+ \qquad Z_i\overset{\mathrm{i.i.d.}}{\sim}\mathcal N(0,1),
+\]
+where $d_n\ge\bigl\lceil\sqrt{(\log n)/2}\bigr\rceil$ and
+\[
+ \theta\in\Theta_n:=\left\{\theta\in\mathbb R^{d_n}:\sum_{i=1}^{d_n}e^{2i^2}\theta_i^2\le1\right\}.
+\]
+Under squared $\ell_2$ loss, define the minimax and linear minimax risks by
+\[
+ \begin{aligned}
+ R_M(\Theta_n)&=\inf_{\hat\theta}\sup_{\theta\in\Theta_n}
+   \mathbb E_\theta\|\hat\theta(X)-\theta\|_2^2,\\
+ R_L(\Theta_n)&=\inf_{M\in\mathbb R^{d_n\times d_n}}\sup_{\theta\in\Theta_n}
+   \mathbb E_\theta\|MX-\theta\|_2^2,
+ \end{aligned}
+\]
+where the first infimum is over all measurable estimators.
+
+\begin{enumerate}[label=\textcolor{AccentInk}{\sffamily\bfseries F\arabic*.},ref=F\arabic*,leftmargin=2.65em,labelsep=0.65em,itemsep=1em]
+\item Using Pinsker's theorem, prove that, as $n\to\infty$,
+\[
+ R_M(\Theta_n)\sim R_L(\Theta_n)\sim\frac{\sqrt{\log n}}{\sqrt2\,n}.
+\]
+Here $\log$ denotes the natural logarithm and $u_n\sim v_n$ means $u_n/v_n\to1$.
+\end{enumerate}
